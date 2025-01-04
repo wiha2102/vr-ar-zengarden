@@ -43,8 +43,9 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 	gltfLoader.load('assets/garden.glb', (gltf) => {
-		scene.add(gltf.scene);
-	});
+	        gltf.scene.position.set(0,-1.5,0)
+	        scene.add(gltf.scene);
+    	});
 
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
 		blasterGroup.add(gltf.scene);

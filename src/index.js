@@ -94,11 +94,11 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	});
 }
 
-function onFrame(
-	delta,
-	time,
-	{ scene, camera, renderer, player, controllers },
-) {
+function onFrame( delta, time, { scene, camera, renderer, player, controllers }, ) 
+{
+	const raycaster = new THREE.Raycaster();
+	const tempMatrix = new THREE.Matrix4();
+
 	if(controllers.left){
 		const { gamepad, raySpace, mesh } = controllers.left;
 
@@ -117,6 +117,33 @@ function onFrame(
 	}
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
+
+
+		// Prepare the raycaster direction
+		tempMatrix.identity().extractRotation(raySpace.matrixWorld);
+		raycaster.ray.origin.setFromMatrixPosition(raySpace.matrixWorld);
+		raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+		// Perform raycast against all objects in the scene
+		const intersects = raycaster.intersectObjects(scene.children, true);
+		if (intersects.length > 0) {
+			const hitObject = intersects[0].object;
+
+			if (hitObject.material) {
+				hitObject.material.color.set(Math.random() * 0xffffff);
+			}
+
+			// Scale the object for visual feedback
+			gsap.to(hitObject.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 0.3 });
+			gsap.to(hitObject.scale, { x: 1, y: 1, z: 1, delay: 0.3, duration: 0.3 });
+
+			if (hitObject.name === 'target') {
+				console.log('Hit a target!');
+				// Maybe Some Logics into this
+			}
+		}
+
+
 		if (!raySpace.children.includes(blasterGroup)) {
 			raySpace.add(blasterGroup);
 			mesh.visible = false;
@@ -142,9 +169,10 @@ function onFrame(
 				bulletPrototype.getWorldPosition(bullet.position);
 				bulletPrototype.getWorldQuaternion(bullet.quaternion);
 
-				const directionVector = forwardVector
-					.clone()
-					.applyQuaternion(bullet.quaternion);
+				const directionVector = forwardVector.clone().applyQuaternion(
+					bullet.quaternion
+				);
+
 				bullet.userData = {
 					velocity: directionVector.multiplyScalar(bulletSpeed),
 					timeToLive: bulletTimeToLive,

@@ -107,11 +107,7 @@ function onFrame(
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
 			
-			const forward = new THREE.Vector3(0,0,-1);
-			forward.normalize();
-			forward.applyQuaternion(camera.quaternion)
-			const mag = 5;
-			camera.position.add(forward.multiplyScalar(mag))
+			player.position.z -=0.5
 		}
 		
 	}

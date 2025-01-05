@@ -50,8 +50,13 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
 		blasterGroup.add(gltf.scene);
 	});
+
 	const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.9 );
 	scene.add( directionalLight );
+
+	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
+	light.position.set( 0, 5, 0 );
+	scene.add( light );
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
@@ -107,6 +112,12 @@ function onFrame(
 				// do nothing
 			}
 
+			let forward = new THREE.Vector3(0,0,-1);
+			forward.normalize();
+			forward.applyQuaternion(camera.quaternion)
+			let mag = 10;
+			camera.position.add(forward.multiplyScalar(mag))
+			
 			// Play laser sound
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
@@ -127,6 +138,17 @@ function onFrame(
 				};
 				bullets[bullet.uuid] = bullet;
 			}
+		}
+	}
+	if (controllers.left){
+		const { gamepad, raySpace, mesh } = controllers.right;
+		
+		if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)){
+			let forward = new THREE.Vector3(0,0,1);
+			forward.normalize();
+			forward.applyQuaternion(camera.quaternion)
+			let mag = 1;
+			camera.position.add(forward.multiplyScalar(mag))
 		}
 	}
 

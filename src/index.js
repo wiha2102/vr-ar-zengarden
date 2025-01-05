@@ -99,6 +99,22 @@ function onFrame(
 	time,
 	{ scene, camera, renderer, player, controllers },
 ) {
+	if(controllers.left){
+		const { gamepad, raySpace, mesh } = controllers.left;
+
+		// Play laser sound
+		if (gamepad.getButtonClick(XR_BUTTONS.BUTTON_1)){
+			if (laserSound.isPlaying) laserSound.stop();
+			laserSound.play();
+			
+			const forward = new THREE.Vector3(0,0,-1);
+			forward.normalize();
+			forward.applyQuaternion(camera.quaternion)
+			const mag = 5;
+			camera.position.add(forward.multiplyScalar(mag))
+		}
+		
+	}
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
 		if (!raySpace.children.includes(blasterGroup)) {
@@ -113,11 +129,6 @@ function onFrame(
 			}
 
 			
-			let forward = new THREE.Vector3(0,0,-1);
-			forward.normalize();
-			forward.applyQuaternion(camera.quaternion)
-			let mag = 5;
-			camera.position.add(forward.multiplyScalar(mag))
 		
 
 			// Play laser sound

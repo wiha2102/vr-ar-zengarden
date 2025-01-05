@@ -112,15 +112,17 @@ function onFrame(
 				// do nothing
 			}
 
+			
 			let forward = new THREE.Vector3(0,0,-1);
 			forward.normalize();
 			forward.applyQuaternion(camera.quaternion)
-			let mag = 10;
+			let mag = 5;
 			camera.position.add(forward.multiplyScalar(mag))
-			
+		
+
 			// Play laser sound
-			if (laserSound.isPlaying) laserSound.stop();
-			laserSound.play();
+			//if (laserSound.isPlaying) laserSound.stop();
+			//laserSound.play();
 
 			const bulletPrototype = blasterGroup.getObjectByName('bullet');
 			if (bulletPrototype) {
@@ -140,17 +142,7 @@ function onFrame(
 			}
 		}
 	}
-	if (controllers.left){
-		const { gamepad, raySpace, mesh } = controllers.right;
-		
-		if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)){
-			let forward = new THREE.Vector3(0,0,1);
-			forward.normalize();
-			forward.applyQuaternion(camera.quaternion)
-			let mag = 1;
-			camera.position.add(forward.multiplyScalar(mag))
-		}
-	}
+	
 
 	Object.values(bullets).forEach((bullet) => {
 		if (bullet.userData.timeToLive < 0) {

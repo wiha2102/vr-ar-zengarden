@@ -106,8 +106,12 @@ function onFrame(
 		if (gamepad.getButtonClick(XR_BUTTONS.BUTTON_1)){
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
-			
-			player.position.z -=0.5
+
+			let vec = new THREE.Vector3(0,0,-1)
+			vec.applyQuaternion(camera.quaternion)
+			vec.normalize()
+			let speedu = 2
+			player.position.add(vec.multiplyScalar(speedu))
 		}
 		
 	}

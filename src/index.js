@@ -50,6 +50,8 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
 		blasterGroup.add(gltf.scene);
 	});
+	const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.9 );
+	scene.add( directionalLight );
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {

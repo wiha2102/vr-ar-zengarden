@@ -192,8 +192,9 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			scene.traverse((child) => {
 				console.log(child.name);
 			});
+			var name = 'Nikkissten_Icosphere002_Material003_0'
 
-			var myObject = scene.getObjectByName('Icosphere002_Material003_0', true);
+			var myObject = scene.getObjectByName(name, true);
 
 			// Check if the object was found
 			if (myObject) {
@@ -201,7 +202,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				// Perform operations on the found object
 				myObject.material.color.set(0xff0000); // Example: Change its color to red
 			} else {
-				console.error("Object not found: Icosphere.002_Material.003_0");
+				console.error("Object not found:", name);
 				// Handle the case where the object is not found
 			}
 		}

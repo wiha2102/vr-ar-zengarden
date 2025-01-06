@@ -82,8 +82,10 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add( directionalLight );
 
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
-	light.position.set( 0, 5, 0 );
+	light.position.set( 2, 3, 2 );
 	scene.add( light );
+	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
+	scene.add(lightHelper);
 
 
 	// Add glowing spherical light sources

@@ -169,6 +169,11 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			const speed = 1.5; // Movement speed
 			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
+
+		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
+			var myObject = scene.getObjectByName('Icosphere.002_Material.003_0',true);
+			myObject.position.set(0,0,0)
+		}
 	} else {
 		console.warn("Left controller is not detected.");
 	}

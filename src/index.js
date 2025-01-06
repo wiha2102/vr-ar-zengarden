@@ -64,6 +64,8 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
     return lightGroup;
 }
 
+const movingLights = [];
+
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
@@ -85,22 +87,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
 	scene.add(lightHelper);
 
-	const flashlight = new THREE.SpotLight(
-		0xffffff, // Color of the light
-		1,        // Intensity of the light
-		10,       // Distance: how far the light reaches (set to 0 for infinite)
-		Math.PI / 6, // Angle: cone's spread (in radians, here 30 degrees)
-		0.1,      // Penumbra: how soft the edges of the cone are (0 = hard, 1 = soft)
-		1         // Decay: how quickly the light dims over distance (1 = realistic decay)
-	  );
-	  
-	  // Set the flashlight's position
-	  flashlight.position.set(0, 2, 5); // Adjust x, y, z to fit your scene
-	  // Add the flashlight to the scene
-	  scene.add(flashlight);
-
-
-
 	const geometry = new THREE.BoxGeometry(1, 1, 1); 
 	const material = new THREE.MeshStandardMaterial({
 		color: 0xe3a7ec, 
@@ -109,22 +95,20 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	cube.position.set(1,2,3)
 	scene.add(cube);
 
-
 	// Add glowing spherical light sources
-    // Add glowing spherical light sources
-    addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 250, 15); // Red light
-    addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 15); // Green light
-    addLightSource(scene, new THREE.Vector3(1, 1.8, 1), 0x0000ff, 200, 15); // Blue light
-	addLightSource(scene, new THREE.Vector3(-2, 1, 2.5), 0xffff00, 80, 15); // Yellow light
-	addLightSource(scene, new THREE.Vector3(3, 1, 1), 0xffffff, 80, 15); // White Lihj
+    movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(1, 2, 1), 0x0000ff, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
 			const target = gltf.scene.clone();
 			target.position.set(
-				Math.random() * 10 - 5,
+				Math.random() * 2.5 - 2,
 				i * 2 + 1,
-				-Math.random() * 5 - 5,
+				-Math.random() * 2 - 1.5,
 			);
 			scene.add(target);
 			targets.push(target);
@@ -159,8 +143,17 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const raycaster = new THREE.Raycaster();
 	const tempMatrix = new THREE.Matrix4();
 
+	movingLights.forEach((lightGroup, index) => {
+        const speed = 0.5 + index * 0.75; // Vary speed
+        const radius = 1.5 + index; // Vary radius
+        const angle = time * speed * 2; // Angle depends
+        lightGroup.position.x = Math.cos(angle) * radius;
+        lightGroup.position.z = Math.sin(angle) * radius * .25;
+        lightGroup.position.y = 1 + Math.sin(time * speed) * 0.25;
+    });
+
 	if (controllers.left) {
-		const { gamepad, raySpace, mesh } = controllers.left;
+		const { gamepad } = controllers.left;
 
 		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
             moving = true
@@ -176,9 +169,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			const speed = 1.5; // Movement speed
 			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
-		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
-			
-		}
 	} else {
 		console.warn("Left controller is not detected.");
 	}
@@ -186,6 +176,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
+
 
 		// Prepare the raycaster direction
 		tempMatrix.identity().extractRotation(raySpace.matrixWorld);

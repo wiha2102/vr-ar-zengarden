@@ -64,8 +64,6 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
     return lightGroup;
 }
 
-
-
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
@@ -86,6 +84,22 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add( light );
 	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
 	scene.add(lightHelper);
+
+	const flashlight = new THREE.SpotLight(
+		0xffffff, // Color of the light
+		1,        // Intensity of the light
+		10,       // Distance: how far the light reaches (set to 0 for infinite)
+		Math.PI / 6, // Angle: cone's spread (in radians, here 30 degrees)
+		0.1,      // Penumbra: how soft the edges of the cone are (0 = hard, 1 = soft)
+		1         // Decay: how quickly the light dims over distance (1 = realistic decay)
+	  );
+	  
+	  // Set the flashlight's position
+	  flashlight.position.set(0, 2, 5); // Adjust x, y, z to fit your scene
+	  // Add the flashlight to the scene
+	  scene.add(flashlight);
+
+
 
 	const geometry = new THREE.BoxGeometry(1, 1, 1); 
 	const material = new THREE.MeshStandardMaterial({
@@ -146,7 +160,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const tempMatrix = new THREE.Matrix4();
 
 	if (controllers.left) {
-		const { gamepad } = controllers.left;
+		const { gamepad, raySpace, mesh } = controllers.left;
 
 		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
             moving = true
@@ -162,6 +176,9 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			const speed = 1.5; // Movement speed
 			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
+		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
+			
+		}
 	} else {
 		console.warn("Left controller is not detected.");
 	}
@@ -169,7 +186,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
-
 
 		// Prepare the raycaster direction
 		tempMatrix.identity().extractRotation(raySpace.matrixWorld);

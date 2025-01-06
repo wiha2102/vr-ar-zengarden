@@ -43,8 +43,8 @@ function updateScoreDisplay() {
 
 function addLightSource(scene, position, color = 0xffffff, intensity = 1, distance = 10) {
     // Create a sphere geometry to represent the light source
-    const sphereGeometry = new THREE.SphereGeometry(0.2, 16, 16); // Adjust size and detail as needed
-    const sphereMaterial = new THREE.MeshBasicMaterial({ color }); // Use emissive material for a glowing effect
+    const sphereGeometry = new THREE.SphereGeometry(0.2, 16, 16); // Adjust size
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color }); // Use emissive 
     const lightSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
 
     // Position the sphere

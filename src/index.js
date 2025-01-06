@@ -17,6 +17,7 @@ const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
 const bulletSpeed = 10;
 const bulletTimeToLive = 1;
+var moving = false
 
 const blasterGroup = new THREE.Group();
 const targets = [];
@@ -134,33 +135,20 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 	if (controllers.left) {
 		const { gamepad } = controllers.left;
-	
-		if (gamepad && gamepad.buttons) {
-	
-			// Access the desired button state (BUTTON_1)
-			const buttonIndex = XR_BUTTONS.BUTTON_1;
-			const button = gamepad.buttons[buttonIndex];
-	
-			if (button) {
-	
-				// Check if buutton is pressed
-				const isButtonPressed = button.pressed;
-	
-				// If the button is pressed.
-				if (isButtonPressed) {
-					// Move the player forward
-					let moveVector = new THREE.Vector3(0, 0, -1);
-					moveVector.applyQuaternion(camera.quaternion);
-					moveVector.normalize();
-	
-					const speed = 1.5; // Movement speed
-					player.position.add(moveVector.multiplyScalar(speed * delta));
-				}
-			} else {
-				console.warn(`Button at index ${buttonIndex} is not defined.`);
-			}
-		} else {
-			console.warn("Gamepad or buttons array is undefined.");
+
+		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
+            moving = true
+        }
+        if(gamepad.getButtonUp(XR_BUTTONS.BUTTON_1)){
+            moving = false
+        }
+		if (moving) {
+			// Move the player forward
+			let moveVector = new THREE.Vector3(0, 0, -1);
+			moveVector.applyQuaternion(camera.quaternion);
+			moveVector.normalize();
+			const speed = 1.5; // Movement speed
+			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
 	} else {
 		console.warn("Left controller is not detected.");

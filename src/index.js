@@ -107,11 +107,11 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
 
-			let vec = new THREE.Vector3(0,0,-1)
-			vec.applyQuaternion(camera.quaternion)
-			vec.normalize()
-			let speedu = 2
-			player.position.add(vec.multiplyScalar(speedu))
+			let vec = new THREE.Vector3(0,0,-1);
+			vec.applyQuaternion(camera.quaternion);
+			vec.normalize();
+			let speedu = .5;
+			player.position.add(vec.multiplyScalar(speedu * delta));
 		}
 		
 	}

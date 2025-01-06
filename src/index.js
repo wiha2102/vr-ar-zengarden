@@ -173,7 +173,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 	if (controllers.left) {
 		const { gamepad } = controllers.left;
-
 		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
             moving = true
         }
@@ -190,8 +189,21 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		}
 
 		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
-			var myObject = scene.getObjectByName('Icosphere.002_Material.003_0',true);
-			myObject.position.set(0,0,0)
+			scene.traverse((child) => {
+				console.log(child.name);
+			});
+
+			var myObject = scene.getObjectByName('Icosphere002_Material003_0', true);
+
+			// Check if the object was found
+			if (myObject) {
+				console.log("Object found:", myObject);
+				// Perform operations on the found object
+				myObject.material.color.set(0xff0000); // Example: Change its color to red
+			} else {
+				console.error("Object not found: Icosphere.002_Material.003_0");
+				// Handle the case where the object is not found
+			}
 		}
 	} else {
 		console.warn("Left controller is not detected.");

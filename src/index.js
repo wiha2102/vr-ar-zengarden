@@ -87,6 +87,14 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
 	scene.add(lightHelper);
 
+	const geometry = new THREE.BoxGeometry(1, 1, 1); 
+	const material = new THREE.MeshStandardMaterial({
+		color: 0xe3a7ec, 
+	});
+	const cube = new THREE.Mesh(geometry, material);
+	cube.position.set(1,2,3)
+	scene.add(cube);
+
 
 	// Add glowing spherical light sources
     addLightSource(scene, new THREE.Vector3(2, 3, -5), 0xff0000, 2, 15); // Red light

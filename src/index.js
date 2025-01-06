@@ -87,11 +87,21 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
 	scene.add(lightHelper);
 
+	const geometry = new THREE.BoxGeometry(1, 1, 1); 
+	const material = new THREE.MeshStandardMaterial({
+		color: 0xe3a7ec, 
+	});
+	const cube = new THREE.Mesh(geometry, material);
+	cube.position.set(1,2,3)
+	scene.add(cube);
+
 
 	// Add glowing spherical light sources
-    addLightSource(scene, new THREE.Vector3(2, 3, -5), 0xff0000, 2, 15); // Red light
-    addLightSource(scene, new THREE.Vector3(-3, 2, -10), 0x00ff00, 2, 15); // Green light
-    addLightSource(scene, new THREE.Vector3(0, 4, -7), 0x0000ff, 2, 15); // Blue light
+    addLightSource(scene, new THREE.Vector3(2, 4, -1), 0xff0000, 2, 15); // Red light
+    addLightSource(scene, new THREE.Vector3(-3, 3.5, -1), 0x00ff00, 2, 15); // Green light
+    addLightSource(scene, new THREE.Vector3(0, 1, 1), 0x0000ff, 2, 15); // Blue light
+	addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 2, 15); // Yellow light
+	addLightSource(scene, new THREE.Vector3(3, 4, 1), 0xffffff, 2, 15); // White Lihj
 
 
 	gltfLoader.load('assets/target.glb', (gltf) => {

@@ -128,7 +128,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 	const audioLoader = new THREE.AudioLoader();
 	laserSound = new THREE.PositionalAudio(listener);
-	audioLoader.load('assets/laser.ogg', (buffer) => {
+	audioLoader.load('assets/water-drop.ogg', (buffer) => {
 		laserSound.setBuffer(buffer);
 		blasterGroup.add(laserSound);
 	});
@@ -139,6 +139,25 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		scoreText.add(scoreSound);
 	});
 }
+
+
+// Create a waterdrop bullet shape
+function createWaterdropBullet() {
+	const geometry = new THREE.ConeGeometry(0.05, 0.2, 16); // Base radius, height, radial segments
+	const material = new THREE.MeshStandardMaterial({
+		color: 0x00bfff, // Aqua color
+		emissive: 0x0000ff, // Glow effect
+		emissiveIntensity: 0.5,
+	});
+
+	const waterdrop = new THREE.Mesh(geometry, material);
+
+	// Rotate the cone to point in the forward direction
+	waterdrop.rotation.x = Math.PI; // Rotate 180 degrees
+
+	return waterdrop;
+}
+
 
 function onFrame( delta, time, { scene, camera, renderer, player, controllers }, ) 
 {
@@ -207,13 +226,36 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				// do nothing
 			}
 
+			// Play water sound
+			if (laserSound.isPlaying) laserSound.stop();
+			laserSound.play();
+			// Replace bullet creation logic
+			if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
+				try {
+					gamepad.getHapticActuator(0).pulse(0.6, 100);
+				} catch {
+					// Do nothing
+				}
+
+				const bullet = createWaterdropBullet();
+				scene.add(bullet);
+
+				// Position the waterdrop at the blaster's position
+				blasterGroup.getWorldPosition(bullet.position);
+				blasterGroup.getWorldQuaternion(bullet.quaternion);
+
+				// Set the velocity and time-to-live for the bullet
+				const directionVector = forwardVector.clone().applyQuaternion(bullet.quaternion);
+				bullet.userData = {
+					velocity: directionVector.multiplyScalar(bulletSpeed),
+					timeToLive: bulletTimeToLive,
+				};
+				bullets[bullet.uuid] = bullet;
+			}
+
+
 			
-		
-
-			// Play laser sound
-			//if (laserSound.isPlaying) laserSound.stop();
-			//laserSound.play();
-
+			/*
 			const bulletPrototype = blasterGroup.getObjectByName('bullet');
 			if (bulletPrototype) {
 				const bullet = bulletPrototype.clone();
@@ -230,7 +272,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 					timeToLive: bulletTimeToLive,
 				};
 				bullets[bullet.uuid] = bullet;
-			}
+			}*/
 		}
 	}
 	

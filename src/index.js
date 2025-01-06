@@ -103,7 +103,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		const { gamepad, raySpace, mesh } = controllers.left;
 
 		// Play laser sound
-		if (gamepad.getButtonClick(XR_BUTTONS.BUTTON_1)){
+		if (gamepad.getButtonState(XR_BUTTONS.BUTTON_1)){
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
 

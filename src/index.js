@@ -21,6 +21,8 @@ var moving = false
 
 const blasterGroup = new THREE.Group();
 const targets = [];
+const movingLights = [];
+const drop = []; // NIKKIS WATER TEST
 
 let score = 0;
 const scoreText = new Text();
@@ -33,6 +35,8 @@ scoreText.anchorY = 'middle';
 
 let laserSound, scoreSound;
 
+
+// Remove later (scoreboard)
 function updateScoreDisplay() {
 	const clampedScore = Math.max(0, Math.min(9999, score));
 	const displayScore = clampedScore.toString().padStart(4, '0');
@@ -40,7 +44,7 @@ function updateScoreDisplay() {
 	scoreText.sync();
 }
 
-
+// Light scources
 function addLightSource(scene, position, color = 0xffffff, intensity = 1, distance = 10) {
     // Create a sphere geometry to represent the light source
     const sphereGeometry = new THREE.SphereGeometry(0.2, 16, 16); // Adjust size
@@ -64,7 +68,6 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
     return lightGroup;
 }
 
-const movingLights = [];
 
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
@@ -74,6 +77,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		scene.add(gltf.scene);
 	});
 
+	// Maybe change?
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
 		blasterGroup.add(gltf.scene);
 	});
@@ -102,6 +106,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
 
+	// Remove later ----
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
 			const target = gltf.scene.clone();
@@ -114,16 +119,15 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 			targets.push(target);
 		}
 	});
-
 	scene.add(scoreText);
 	scoreText.position.set(0, 0.67, -1.44);
 	scoreText.rotateX(-Math.PI / 3.3);
-	updateScoreDisplay();
+	updateScoreDisplay(); //----
 
 	// Load and set up positional audio
 	const listener = new THREE.AudioListener();
 	camera.add(listener);
-
+	// Water drop audio
 	const audioLoader = new THREE.AudioLoader();
 	laserSound = new THREE.PositionalAudio(listener);
 	audioLoader.load('assets/water-drop.ogg', (buffer) => {
@@ -131,6 +135,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		blasterGroup.add(laserSound);
 	});
 
+	// Remove later
 	scoreSound = new THREE.PositionalAudio(listener);
 	audioLoader.load('assets/score.ogg', (buffer) => {
 		scoreSound.setBuffer(buffer);
@@ -139,7 +144,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 }
 
 
-// Create a waterdrop bullet shape
+// Create a waterdrop bullet shape (IN PROGRESS)
 function createWaterdropBullet() {
 	const geometry = new THREE.ConeGeometry(0.05, 0.2, 16); // Base radius, height, radial segments
 	const material = new THREE.MeshStandardMaterial({
@@ -147,11 +152,9 @@ function createWaterdropBullet() {
 		emissive: 0x0000ff, // Glow effect
 		emissiveIntensity: 0.5,
 	});
-
 	const waterdrop = new THREE.Mesh(geometry, material);
-
 	// Rotate the cone to point in the forward direction
-	waterdrop.rotation.x = Math.PI; // Rotate 180 degrees
+	//waterdrop.rotation.x = Math.PI; // Rotate 180 degrees
 
 	return waterdrop;
 }
@@ -172,6 +175,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
     });
 
 	if (controllers.left) {
+		// MOVING THE PLAYER
 		const { gamepad } = controllers.left;
 		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
             moving = true
@@ -188,6 +192,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
 
+		// CHANGE OBJECTS WITH A BUTTON CLICK
 		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
 			scene.traverse((child) => {
 				console.log(child.name);
@@ -213,7 +218,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
-
 
 		// Prepare the raycaster direction
 		tempMatrix.identity().extractRotation(raySpace.matrixWorld);
@@ -244,13 +248,13 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			raySpace.add(blasterGroup);
 			mesh.visible = false;
 		}
+		// SHOOT A WATERDROP AND PLAY A SOUND
 		if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
 			try {
 				gamepad.getHapticActuator(0).pulse(0.6, 100);
 			} catch {
 				// do nothing
 			}
-
 			// Play water sound
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
@@ -261,14 +265,11 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				} catch {
 					// Do nothing
 				}
-
 				const bullet = createWaterdropBullet();
 				scene.add(bullet);
-
 				// Position the waterdrop at the blaster's position
 				blasterGroup.getWorldPosition(bullet.position);
 				blasterGroup.getWorldQuaternion(bullet.quaternion);
-
 				// Set the velocity and time-to-live for the bullet
 				const directionVector = forwardVector.clone().applyQuaternion(bullet.quaternion);
 				bullet.userData = {
@@ -277,31 +278,10 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				};
 				bullets[bullet.uuid] = bullet;
 			}
-
-
-			
-			/*
-			const bulletPrototype = blasterGroup.getObjectByName('bullet');
-			if (bulletPrototype) {
-				const bullet = bulletPrototype.clone();
-				scene.add(bullet);
-				bulletPrototype.getWorldPosition(bullet.position);
-				bulletPrototype.getWorldQuaternion(bullet.quaternion);
-
-				const directionVector = forwardVector.clone().applyQuaternion(
-					bullet.quaternion
-				);
-
-				bullet.userData = {
-					velocity: directionVector.multiplyScalar(bulletSpeed),
-					timeToLive: bulletTimeToLive,
-				};
-				bullets[bullet.uuid] = bullet;
-			}*/
 		}
 	}
 	
-
+	// Remove or reuse later
 	Object.values(bullets).forEach((bullet) => {
 		if (bullet.userData.timeToLive < 0) {
 			delete bullets[bullet.uuid];

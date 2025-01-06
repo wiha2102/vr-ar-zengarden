@@ -17,6 +17,7 @@ const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
 const bulletSpeed = 10;
 const bulletTimeToLive = 1;
+const moving=false;
 
 const blasterGroup = new THREE.Group();
 const targets = [];
@@ -57,6 +58,10 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
 	light.position.set( 0, 5, 0 );
 	scene.add( light );
+
+	const light1 = new THREE.PointLight( 0x800080, 10, 100 );
+	light1.position.set( 5, 5, 5 );
+	scene.add( light1 );
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
@@ -103,7 +108,14 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		const { gamepad, raySpace, mesh } = controllers.left;
 
 		// Play laser sound
-		if (gamepad.getButtonState(XR_BUTTONS.BUTTON_1)){
+		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
+            moving = true
+        }
+        if(gamepad.getButtonUp(XR_BUTTONS.BUTTON_1)){
+            moving = false
+        }
+        
+      	if (moving){
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
 

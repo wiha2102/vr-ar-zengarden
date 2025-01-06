@@ -64,12 +64,14 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add( directionalLight );
 
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
-	light.position.set( 0, 5, 0 );
+	light.position.set( 2, 3, 2 );
 	scene.add( light );
 
 	const light1 = new THREE.PointLight( 0x800080, 10, 100 );
 	light1.position.set( 5, 5, 5 );
 	scene.add( light1 );
+	const lightHelper = new THREE.PointLightHelper(light1, 1); // 1 is the size of the helper sphere
+	scene.add(lightHelper);
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
@@ -122,9 +124,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
         if(gamepad.getButtonUp(XR_BUTTONS.BUTTON_1)){
             moving = false
         }
-        
       	if (moving){
-
 			let vec = new THREE.Vector3(0,0,-1);
 			vec.applyQuaternion(camera.quaternion);
 			vec.normalize();

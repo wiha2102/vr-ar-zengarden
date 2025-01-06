@@ -17,7 +17,6 @@ const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
 const bulletSpeed = 10;
 const bulletTimeToLive = 1;
-var moving=false;
 
 const blasterGroup = new THREE.Group();
 const targets = [];
@@ -40,38 +39,57 @@ function updateScoreDisplay() {
 	scoreText.sync();
 }
 
+
+function addLightSource(scene, position, color = 0xffffff, intensity = 1, distance = 10) {
+    // Create a sphere geometry to represent the light source
+    const sphereGeometry = new THREE.SphereGeometry(0.2, 16, 16); // Adjust size and detail as needed
+    const sphereMaterial = new THREE.MeshBasicMaterial({ color }); // Use emissive material for a glowing effect
+    const lightSphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+
+    // Position the sphere
+    lightSphere.position.copy(position);
+    scene.add(lightSphere);
+
+    // Create a point light
+    const pointLight = new THREE.PointLight(color, intensity, distance);
+    pointLight.position.copy(position);
+    scene.add(pointLight);
+
+    const lightGroup = new THREE.Group();
+    lightGroup.add(lightSphere);
+    lightGroup.add(pointLight);
+    scene.add(lightGroup);
+
+    return lightGroup;
+}
+
+
+
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 	gltfLoader.load('assets/garden.glb', (gltf) => {
-	        gltf.scene.position.set(0,-1.5,0)
-	        scene.add(gltf.scene);
-    	});
+		gltf.scene.position.set(0,-1.5,0)
+		scene.add(gltf.scene);
+	});
 
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
 		blasterGroup.add(gltf.scene);
 	});
 
-	const geometry = new THREE.BoxGeometry(1, 1, 1); // Width, height, depth
-	const material = new THREE.MeshStandardMaterial({
-		color: 0x00ff00, // Green color
-	});
-	const cube = new THREE.Mesh(geometry, material);
-	cube.position.set(2,2,2)
-	scene.add(cube);
-
 	const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.9 );
 	scene.add( directionalLight );
 
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
-	light.position.set( 2, 3, 2 );
+	light.position.set( 0, 5, 0 );
 	scene.add( light );
 
-	const light1 = new THREE.PointLight( 0x800080, 10, 100 );
-	light1.position.set( 5, 5, 5 );
-	scene.add( light1 );
-	const lightHelper = new THREE.PointLightHelper(light1, 1); // 1 is the size of the helper sphere
-	scene.add(lightHelper);
+
+	// Add glowing spherical light sources
+    addLightSource(scene, new THREE.Vector3(2, 3, -5), 0xff0000, 2, 15); // Red light
+    addLightSource(scene, new THREE.Vector3(-3, 2, -10), 0x00ff00, 2, 15); // Green light
+    addLightSource(scene, new THREE.Vector3(0, 4, -7), 0x0000ff, 2, 15); // Blue light
+
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
@@ -114,27 +132,44 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const raycaster = new THREE.Raycaster();
 	const tempMatrix = new THREE.Matrix4();
 
-	if(controllers.left){
-		const { gamepad, raySpace, mesh } = controllers.left;
-
-		// Play laser sound
-		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
-            moving = true
-        }
-        if(gamepad.getButtonUp(XR_BUTTONS.BUTTON_1)){
-            moving = false
-        }
-      	if (moving){
-			let vec = new THREE.Vector3(0,0,-1);
-			vec.applyQuaternion(camera.quaternion);
-			vec.normalize();
-			let speedu = 1.5;
-			player.position.add(vec.multiplyScalar(speedu * delta));
+	if (controllers.left) {
+		const { gamepad } = controllers.left;
+	
+		if (gamepad && gamepad.buttons) {
+	
+			// Access the desired button state (BUTTON_1)
+			const buttonIndex = XR_BUTTONS.BUTTON_1;
+			const button = gamepad.buttons[buttonIndex];
+	
+			if (button) {
+	
+				// Check if buutton is pressed
+				const isButtonPressed = button.pressed;
+	
+				// If the button is pressed.
+				if (isButtonPressed) {
+					// Move the player forward
+					let moveVector = new THREE.Vector3(0, 0, -1);
+					moveVector.applyQuaternion(camera.quaternion);
+					moveVector.normalize();
+	
+					const speed = 1.5; // Movement speed
+					player.position.add(moveVector.multiplyScalar(speed * delta));
+				}
+			} else {
+				console.warn(`Button at index ${buttonIndex} is not defined.`);
+			}
+		} else {
+			console.warn("Gamepad or buttons array is undefined.");
 		}
-		
+	} else {
+		console.warn("Left controller is not detected.");
 	}
+
+
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
+
 
 		// Prepare the raycaster direction
 		tempMatrix.identity().extractRotation(raySpace.matrixWorld);
@@ -171,6 +206,9 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			} catch {
 				// do nothing
 			}
+
+			
+		
 
 			// Play laser sound
 			//if (laserSound.isPlaying) laserSound.stop();

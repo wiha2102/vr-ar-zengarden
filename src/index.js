@@ -17,7 +17,7 @@ const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
 const bulletSpeed = 10;
 const bulletTimeToLive = 1;
-const moving=false;
+var moving=false;
 
 const blasterGroup = new THREE.Group();
 const targets = [];
@@ -51,6 +51,14 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
 		blasterGroup.add(gltf.scene);
 	});
+
+	const geometry = new THREE.BoxGeometry(1, 1, 1); // Width, height, depth
+	const material = new THREE.MeshStandardMaterial({
+		color: 0x00ff00, // Green color
+	});
+	const cube = new THREE.Mesh(geometry, material);
+	cube.position.set(2,2,2)
+	scene.add(cube);
 
 	const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.9 );
 	scene.add( directionalLight );
@@ -116,8 +124,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
         }
         
       	if (moving){
-			if (laserSound.isPlaying) laserSound.stop();
-			laserSound.play();
 
 			let vec = new THREE.Vector3(0,0,-1);
 			vec.applyQuaternion(camera.quaternion);
@@ -129,7 +135,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	}
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
-
 
 		// Prepare the raycaster direction
 		tempMatrix.identity().extractRotation(raySpace.matrixWorld);
@@ -166,9 +171,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			} catch {
 				// do nothing
 			}
-
-			
-		
 
 			// Play laser sound
 			//if (laserSound.isPlaying) laserSound.stop();

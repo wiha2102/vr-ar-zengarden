@@ -110,7 +110,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			let vec = new THREE.Vector3(0,0,-1);
 			vec.applyQuaternion(camera.quaternion);
 			vec.normalize();
-			let speedu = .5;
+			let speedu = 1.5;
 			player.position.add(vec.multiplyScalar(speedu * delta));
 		}
 		

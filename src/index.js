@@ -64,7 +64,7 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
     return lightGroup;
 }
 
-
+const movingLights = [];
 
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
@@ -95,22 +95,20 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	cube.position.set(1,2,3)
 	scene.add(cube);
 
-
 	// Add glowing spherical light sources
-    // Add glowing spherical light sources
-    addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 250, 15); // Red light
-    addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 15); // Green light
-    addLightSource(scene, new THREE.Vector3(1, 1.8, 1), 0x0000ff, 200, 15); // Blue light
-	addLightSource(scene, new THREE.Vector3(-2, 1, 2.5), 0xffff00, 80, 15); // Yellow light
-	addLightSource(scene, new THREE.Vector3(3, 1, 1), 0xffffff, 80, 15); // White Lihj
+    movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(1, 2, 1), 0x0000ff, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
+	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
 
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
 			const target = gltf.scene.clone();
 			target.position.set(
-				Math.random() * 10 - 5,
+				Math.random() * 2.5 - 2,
 				i * 2 + 1,
-				-Math.random() * 5 - 5,
+				-Math.random() * 2 - 1.5,
 			);
 			scene.add(target);
 			targets.push(target);
@@ -164,6 +162,15 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const raycaster = new THREE.Raycaster();
 	const tempMatrix = new THREE.Matrix4();
 
+	movingLights.forEach((lightGroup, index) => {
+        const speed = 0.5 + index * 0.75; // Vary speed
+        const radius = 1.5 + index; // Vary radius
+        const angle = time * speed * 2; // Angle depends
+        lightGroup.position.x = Math.cos(angle) * radius;
+        lightGroup.position.z = Math.sin(angle) * radius * .25;
+        lightGroup.position.y = 1 + Math.sin(time * speed) * 0.25;
+    });
+
 	if (controllers.left) {
 		const { gamepad } = controllers.left;
 
@@ -180,6 +187,11 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			moveVector.normalize();
 			const speed = 1.5; // Movement speed
 			player.position.add(moveVector.multiplyScalar(speed * delta));
+		}
+
+		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
+			var myObject = scene.getObjectByName('Icosphere.002_Material.003_0',true);
+			myObject.position.set(0,0,0)
 		}
 	} else {
 		console.warn("Left controller is not detected.");

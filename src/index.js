@@ -24,6 +24,8 @@ const blasterGroup = new THREE.Group();
 const targets = [];
 const movingLights = [];
 const drop = []; // NIKKIS WATER TEST
+bigStone = "LargeRock_Rock2_0";
+bigLight = "biglight";
 
 let score = 0;
 const scoreText = new Text();
@@ -217,7 +219,7 @@ function handleRaycast(raycaster, scene) {
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
-	gltfLoader.load('assets/garden2.glb', (gltf) => {
+	gltfLoader.load('assets/garden3.glb', (gltf) => {
 		const garden = gltf.scene.clone();
 		gltf.scene.position.set(0, -1.5, 0);
 		scene.add(gltf.scene);
@@ -328,6 +330,7 @@ function createWaterdropBullet() {
 
 function onFrame( delta, time, { scene, camera, renderer, player, controllers }, ) 
 {
+	player.position.y = 0;
 	const raycaster = new THREE.Raycaster();
 	const tempMatrix = new THREE.Matrix4();
 /*

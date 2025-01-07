@@ -69,13 +69,109 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
 }
 
 
+
+function createExplosion(scene, position) {
+    const particleCount = 300;
+    const particles = [];
+    const velocities = [];
+
+    // Generate particles and assign random velocities
+    for (let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.035, 5, 5), // Small spheres as particles
+            new THREE.MeshStandardMaterial({
+                color: 0xff4500,
+                emissive: 0x553377,
+                emissiveIntensity: 8,
+            })
+        );
+
+        particle.position.copy(position);
+        const velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 6
+        );
+
+        particles.push(particle);
+        velocities.push(velocity);
+
+        scene.add(particle);
+    }
+
+    // Particle updatee by time
+    const lifespan = 2; // Measureed in Seconds
+    const updateParticles = (delta) => {
+        for (let i = 0; i < particles.length; i++) {
+            const particle = particles[i];
+            if (!particle) continue;
+
+            particle.position.add(velocities[i].clone().multiplyScalar(delta));
+
+            // Gradually fade out the particles ovetr time
+            const material = particle.material;
+            if (material.opacity > 0) {
+                material.opacity -= delta / lifespan; // Fade out
+                material.transparent = true;
+            } else {
+                scene.remove(particle);
+                particles[i] = null;
+            }
+        }
+    };
+
+    const startTime = performance.now();
+    const animateParticles = () => {
+        const currentTime = performance.now();
+        const elapsedTime = (currentTime - startTime) / 1000;
+
+        if (elapsedTime < lifespan) {
+            requestAnimationFrame(animateParticles);
+            const delta = 0.016;
+            updateParticles(delta);
+        } else {
+            particles.forEach((particle) => {
+                if (particle) {
+                    scene.remove(particle);
+                    particle.geometry.dispose();
+                    particle.material.dispose();
+                }
+            });
+        }
+    };
+    animateParticles();
+}
+
+
+
+function handleRaycast(raycaster, scene) {
+	const intersects = raycaster.intersectObjects(scene.children);
+	if (intersects.length > 0) {
+		return intersects[0];
+	}
+	return null;
+}
+
+
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 	gltfLoader.load('assets/garden.glb', (gltf) => {
-		gltf.scene.position.set(0,-1.5,0)
+		gltf.scene.position.set(0, -1.5, 0);
 		scene.add(gltf.scene);
+	
+		// Traverse the loaded model to find clickable/interactable objects
+		gltf.scene.traverse((child) => {
+			if (child.isMesh) {
+				child.userData.interactable = true; // Mark as interactable
+				child.material = new THREE.MeshStandardMaterial({
+					color: child.material.color,
+					emissive: new THREE.Color(0x000000),
+				});
+			}
+		});
 	});
+	
 
 	// Maybe change?
 	gltfLoader.load('assets/blaster.glb', (gltf) => {
@@ -293,18 +389,19 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		bullet.userData.timeToLive -= delta;
 
 		targets
-			.filter((target) => target.visible)
+			.filter((target) => target.visible && target.visible)
 			.forEach((target) => {
 				const distance = target.position.distanceTo(bullet.position);
 				if (distance < 1) {
 					delete bullets[bullet.uuid];
 					scene.remove(bullet);
 
+					// Createw explostions for hte targetes to test ig it works
+					createExplosion(scene, target.position);
+
 					gsap.to(target.scale, {
 						duration: 0.3,
-						x: 0,
-						y: 0,
-						z: 0,
+						x: 0, y: 0, z: 0,
 						onComplete: () => {
 							target.visible = false;
 							setTimeout(() => {

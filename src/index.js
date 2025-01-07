@@ -113,8 +113,8 @@ function createSunlight(scene) {
 }
 
 
-function animateSunlight(time) {
-    const radius = 300; // Distance from the center
+function animateSunlight(sun, sunlight, time) {
+    const radius = 50; // Distance from the center
     const speed = 0.05; // Speed of rotation
     const yOffset = 100; // Stay above the horizon
 
@@ -133,7 +133,7 @@ function animateSunlight(time) {
 
 
 function createExplosion(scene, position) {
-    const particleCount = 300;
+    const particleCount = 20;
     const particles = [];
     const velocities = [];
 
@@ -265,7 +265,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add(cube);
 
 	// Add glowing spherical light sources
-	/*
+/*
     movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(1, 2, 1), 0x0000ff, 120, 250));
@@ -341,7 +341,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
     });
 */
 
-	if (sun && sunlight) { animateSunlight(time); }
+	if (sun && sunlight) { animateSunlight(sun, sunlight, time); }
 
 
 	if (controllers.left) {

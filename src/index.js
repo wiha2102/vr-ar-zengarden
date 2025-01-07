@@ -229,16 +229,15 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 
 	
-	const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Strong directional light
-    directionalLight.position.set(100, 200, 100); // Position the light above the scene
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    directionalLight.position.set(100, 200, 100);
     directionalLight.castShadow = true;
 
-    // Configure the shadow properties
-    directionalLight.shadow.mapSize.width = 4096; // High-resolution shadows
+    directionalLight.shadow.mapSize.width = 4096;
     directionalLight.shadow.mapSize.height = 4096;
     directionalLight.shadow.camera.near = 1;
     directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.camera.left = -200; // Adjust shadow bounds
+    directionalLight.shadow.camera.left = -200;
     directionalLight.shadow.camera.right = 200;
     directionalLight.shadow.camera.top = 200;
     directionalLight.shadow.camera.bottom = -200;
@@ -254,10 +253,8 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 
 	gltfLoader.load('assets/garden3.glb', (gltf) => {
-        const garden = gltf.scene.clone();
         garden.position.set(0, -1.5, 0);
         scene.add(garden);
-        targets.push(garden);
 
         garden.traverse((child) => {
             if (child.name === bigLight) {

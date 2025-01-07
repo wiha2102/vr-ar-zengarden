@@ -50,6 +50,10 @@ function updateScoreDisplay() {
 	scoreText.sync();
 }
 
+
+
+
+
 // Light scources
 function addLightSource(scene, position, color = 0xffffff, intensity = 1, distance = 10) {
     // Create a sphere geometry to represent the light source
@@ -220,22 +224,37 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 	gltfLoader.load('assets/garden3.glb', (gltf) => {
-		const garden = gltf.scene.clone();
-		gltf.scene.position.set(0, -1.5, 0);
-		scene.add(gltf.scene);
-		targets.push(garden);
-	
-		// Traverse the loaded model to find clickable/interactable objects
-		gltf.scene.traverse((child) => {
-			if (child.isMesh) {
-				child.userData.interactable = true; // Mark as interactable
-				child.material = new THREE.MeshStandardMaterial({
-					color: child.material.color,
-					emissive: new THREE.Color(0x000000),
-				});
-			}
-		});
-	});
+        const garden = gltf.scene.clone();
+        garden.position.set(0, -1.5, 0);
+        scene.add(garden);
+        targets.push(garden);
+
+        // Traverse the loaded scene to find bigLight and configure it
+        garden.traverse((child) => {
+            if (child.name === bigLight) { // Check if the name matches "biglight"
+                if (child.isLight) {
+                    console.log("Found Blender light:", child);
+
+                    // Configure the light (adjust as needed)
+                    child.intensity = 2; // Set the intensity
+                    child.color = new THREE.Color(0xffeedd); // Soft yellow light
+                    child.position.set(100, 200, -50); // Adjust position if necessary
+
+                    // Ensure shadows if it's a light type that supports them
+                    if (child.castShadow !== undefined) {
+                        child.castShadow = true;
+                        child.shadow.mapSize.width = 2048;
+                        child.shadow.mapSize.height = 2048;
+                    }
+
+                    // Add the light to the scene (if not already part of the garden group)
+                    scene.add(child);
+                } else {
+                    console.warn(`Expected light, but found: ${child.type}`);
+                }
+            }
+        });
+    });
 
 	sun = addSunSphere(scene);
     sunlight = createSunlight(scene);

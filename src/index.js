@@ -223,6 +223,36 @@ function handleRaycast(raycaster, scene) {
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
+	// Lower the Ambient Light
+	const ambientLight = new THREE.AmbientLight(0xffffff, 0.025);
+	scene.add(ambientLight);
+
+
+	
+	const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5); // Strong directional light
+    directionalLight.position.set(100, 200, 100); // Position the light above the scene
+    directionalLight.castShadow = true;
+
+    // Configure the shadow properties
+    directionalLight.shadow.mapSize.width = 4096; // High-resolution shadows
+    directionalLight.shadow.mapSize.height = 4096;
+    directionalLight.shadow.camera.near = 1;
+    directionalLight.shadow.camera.far = 500;
+    directionalLight.shadow.camera.left = -200; // Adjust shadow bounds
+    directionalLight.shadow.camera.right = 200;
+    directionalLight.shadow.camera.top = 200;
+    directionalLight.shadow.camera.bottom = -200;
+
+    scene.add(directionalLight);
+
+	const lightHelpe = new THREE.DirectionalLightHelper(directionalLight, 10);
+    scene.add(lightHelpe);
+
+    const shadowCameraHelpe = new THREE.CameraHelper(directionalLight.shadow.camera);
+    scene.add(shadowCameraHelpe);
+
+
+
 	gltfLoader.load('assets/garden3.glb', (gltf) => {
         const garden = gltf.scene.clone();
         garden.position.set(0, -1.5, 0);
@@ -253,6 +283,9 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 				child.castShadow = true;
 				child.receiveShadow = true;
 			}
+			else if (child.isMesh) {
+                child.receiveShadow = true;
+            }
         });
     });
 
@@ -268,8 +301,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		blasterGroup.add(gltf.scene);
 	});
 
-	const directionalLight = new THREE.DirectionalLight( 0xffffff, 0.9 );
-	scene.add( directionalLight );
 
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
 	light.position.set( 2, 3, 2 );
@@ -294,7 +325,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
 */
 
-	addLightSource(scene, new THREE.Vector3(1, .5, -.5), 0x0000ff, 120, 250);
+	//addLightSource(scene, new THREE.Vector3(1, 2.5, -2), 0xeeeeee, 200, 200);
 	// Remove later ----
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {

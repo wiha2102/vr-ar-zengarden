@@ -24,8 +24,8 @@ const blasterGroup = new THREE.Group();
 const targets = [];
 const movingLights = [];
 const drop = []; // NIKKIS WATER TEST
-bigStone = "LargeRock_Rock2_0";
-bigLight = "biglight";
+const bigStone = "LargeRock_Rock2_0";
+const bigLight = "biglight";
 
 let score = 0;
 const scoreText = new Text();

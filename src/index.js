@@ -293,6 +293,8 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
 */
+
+	addLightSource(scene, new THREE.Vector3(1, .5, -.5), 0x0000ff, 120, 250);
 	// Remove later ----
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {

@@ -13,6 +13,7 @@ import { XR_BUTTONS } from 'gamepad-wrapper';
 import { gsap } from 'gsap';
 import { init } from './init.js';
 
+
 const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
 const bulletSpeed = 10;
@@ -34,6 +35,9 @@ scoreText.anchorX = 'center';
 scoreText.anchorY = 'middle';
 
 let laserSound, scoreSound;
+
+let sun = null;
+let sunlight = null;
 
 
 // Remove later (scoreboard)
@@ -66,6 +70,64 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
     scene.add(lightGroup);
 
     return lightGroup;
+}
+
+function addSunSphere(scene) {
+	 const sunSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(20, 32, 32),
+        new THREE.MeshBasicMaterial({
+            color: 0xffd700, 		// Golden yellow
+            emissive: 0xffaa00, 	// Glow effect
+            emissiveIntensity: 5, 	// Bright glow
+        })
+    );
+
+    sunSphere.position.set(100, 150, -200);
+    scene.add(sunSphere);
+
+    return sunSphere;
+}
+
+
+function createSunlight(scene) {
+    const sunlight = new THREE.SpotLight(0xfff8e8, 3);
+    sunlight.position.set(100, 150, -200);
+    sunlight.angle = Math.PI / 6;
+    sunlight.penumbra = 0.1; // Slightly soft edges
+    sunlight.decay = 2;
+    sunlight.distance = 500;
+
+    // Enable shadows for the sunlight
+    sunlight.castShadow = true;
+    sunlight.shadow.mapSize.width = 2048;
+    sunlight.shadow.mapSize.height = 2048;
+    sunlight.shadow.camera.near = 10; // Near clipping plane
+    sunlight.shadow.camera.far = 500; // Far clipping plane
+
+    scene.add(sunlight);
+
+    sunlight.target.position.set(0, 0, 0);
+    scene.add(sunlight.target);
+
+    return sunlight;
+}
+
+
+function animateSunlight(time) {
+    const radius = 300; // Distance from the center
+    const speed = 0.05; // Speed of rotation
+    const yOffset = 100; // Stay above the horizon
+
+    const x = Math.cos(time * speed) * radius;
+    const y = Math.sin(time * speed) * radius + yOffset;
+    const z = Math.sin(time * speed) * radius;
+
+    // Update the sun's position
+    sun.position.set(x, y, z);
+
+    sunlight.position.set(x, y, z);
+    sunlight.target.position.set(0, 0, 0);
+    sunlight.target.updateMatrixWorld();
 }
 
 
@@ -152,13 +214,14 @@ function handleRaycast(raycaster, scene) {
 	return null;
 }
 
-
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 	gltfLoader.load('assets/garden.glb', (gltf) => {
+		const garden = gltf.scene.clone();
 		gltf.scene.position.set(0, -1.5, 0);
 		scene.add(gltf.scene);
+		targets.push(garden);
 	
 		// Traverse the loaded model to find clickable/interactable objects
 		gltf.scene.traverse((child) => {
@@ -171,6 +234,12 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 			}
 		});
 	});
+
+	sun = addSunSphere(scene);
+    sunlight = createSunlight(scene);
+
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 	
 
 	// Maybe change?
@@ -196,12 +265,13 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add(cube);
 
 	// Add glowing spherical light sources
+	/*
     movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(1, 2, 1), 0x0000ff, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
-
+*/
 	// Remove later ----
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
@@ -260,7 +330,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 {
 	const raycaster = new THREE.Raycaster();
 	const tempMatrix = new THREE.Matrix4();
-
+/*
 	movingLights.forEach((lightGroup, index) => {
         const speed = 0.5 + index * 0.75; // Vary speed
         const radius = 1.5 + index; // Vary radius
@@ -269,6 +339,10 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
         lightGroup.position.z = Math.sin(angle) * radius * .25;
         lightGroup.position.y = 1 + Math.sin(time * speed) * 0.25;
     });
+*/
+
+	if (sun && sunlight) { animateSunlight(time); }
+
 
 	if (controllers.left) {
 		// MOVING THE PLAYER

@@ -253,6 +253,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 
 	gltfLoader.load('assets/garden3.glb', (gltf) => {
+        const garden = gltf.scene.clone();
         garden.position.set(0, -1.5, 0);
         scene.add(garden);
 

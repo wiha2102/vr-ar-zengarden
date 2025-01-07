@@ -115,7 +115,7 @@ function createSunlight(scene) {
 
 function animateSunlight(sun, sunlight, time) {
     const radius = 50; // Distance from the center
-    const speed = 0.05; // Speed of rotation
+    const speed = 0.5; // Speed of rotation
     const yOffset = 100; // Stay above the horizon
 
     const x = Math.cos(time * speed) * radius;

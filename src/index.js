@@ -252,7 +252,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 
 
-	gltfLoader.load('assets/garden3.glb', (gltf) => {
+	gltfLoader.load('assets/garden2.glb', (gltf) => {
         const garden = gltf.scene.clone();
         garden.position.set(0, -1.5, 0);
         scene.add(garden);
@@ -380,10 +380,13 @@ function createWaterdropBullet() {
 
 function onFrame( delta, time, { scene, camera, renderer, player, controllers }, ) 
 {
-	player.position.y = 0;
 	const raycaster = new THREE.Raycaster();
 	const tempMatrix = new THREE.Matrix4();
-/*
+
+	// Player postition
+	player.position.y = -1;
+	
+	/*
 	movingLights.forEach((lightGroup, index) => {
         const speed = 0.5 + index * 0.75; // Vary speed
         const radius = 1.5 + index; // Vary radius
@@ -392,7 +395,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
         lightGroup.position.z = Math.sin(angle) * radius * .25;
         lightGroup.position.y = 1 + Math.sin(time * speed) * 0.25;
     });
-*/
+	*/
 
 	if (sun && sunlight) { animateSunlight(sun, sunlight, time); }
 
@@ -411,7 +414,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			let moveVector = new THREE.Vector3(0, 0, -1);
 			moveVector.applyQuaternion(camera.quaternion);
 			moveVector.normalize();
-			const speed = 1.5; // Movement speed
+			const speed = 2.5; // Movement speed
 			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
 

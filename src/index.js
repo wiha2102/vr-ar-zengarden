@@ -214,7 +214,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 
-	// LIGHT
+	// LIGHT =====================================================================
 	sun = addSunSphere(scene);
 	sunlight = createSunlight(scene);
 
@@ -259,6 +259,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
     const shadowCameraHelpe = new THREE.CameraHelper(directionalLight.shadow.camera);
     //scene.add(shadowCameraHelpe);
+	// LIGHT =====================================================================
 
 	// Load the whole model 
 	gltfLoader.load('assets/garden5.glb', (gltf) => {

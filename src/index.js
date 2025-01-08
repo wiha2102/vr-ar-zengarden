@@ -37,7 +37,6 @@ const plant3 = "plant3";
 const plant4 = "plant4";
 const plant5 = "plant5";
 let plants = [];
-let testPlant=null;
 
 let score = 0;
 const scoreText = new Text();
@@ -130,8 +129,8 @@ function createSunlight(scene) {
 
 
 function animateSunlight(sun, sunlight, time) {
-    const radius = 50; // Distance from the center
-    const speed = 0.5; // Speed of rotation
+    const radius = 25; // Distance from the center
+    const speed = 0.05; // Speed of rotation
     const yOffset = 100; // Stay above the horizon
 
     const x = Math.cos(time * speed) * radius;
@@ -301,18 +300,14 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 				child.receiveShadow = true; 
 				child.castShadow = true;    
 			}			
-			if (['plant2', 'plant3', 'plant4', 'plant5'].includes(child.name)) {
+			if (['plant1', 'plant2', 'plant3', 'plant4', 'plant5', 'smaltree', 'bigtree'].includes(child.name)) {
 				console.log(`Found plant: ${child.name}`);
 				plants.push(child); 
-			}
-			if (child.name === 'plant1') {
-				console.log(`Found plant1: ${child.name}`);
-				testPlant = child; 
 			}
             if (child.name === bigLight) {
                 if (child.isLight) {
                     console.log("Found Blender light:", child);
-                    child.intensity = 122; // ??
+                    child.intensity = 2; // ??
                     child.color = new THREE.Color(0xffeedd);
                     child.position.set(100, 200, -50);
                     if (child.castShadow !== undefined) {
@@ -415,7 +410,9 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const tempMatrix = new THREE.Matrix4();
 
 	// Player postition
-	player.position.y = 0;
+	if (player.position.y !== 0) {
+    	player.position.y = 0;
+	}
 	
 	/*
 	movingLights.forEach((lightGroup, index) => {
@@ -484,30 +481,24 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			// Play water sound
 			if (scissorSound.isPlaying) scissorSound.stop();
 			scissorSound.play();
-			// Replace bullet creation logic
-			if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
-				try {
-					gamepad.getHapticActuator(0).pulse(0.6, 100);
-				} catch {
-					// Do nothing
-				}
-			}
 
-			if (testPlant) {
-				const plantBox = new THREE.Box3().setFromObject(testPlant); // Get the plant's bounding box
-				const scissorSphere = new THREE.Sphere(scissor.position, 1) 
-				if (plantBox.intersectsSphere(scissorSphere)) {
-					console.log('Collision detected with plant1!');
+			const scissorPosition = new THREE.Vector3();
+			scissorGroup.getWorldPosition(scissorPosition);
+			const scissorSphere = new THREE.Sphere(scissor.position, 0.1);
+			plants.forEach(plant => {
+				const plantBoxen2 = new THREE.Box3().setFromObject(plant);
+				if (plantBoxen2.intersectsSphere(scissorSphere)) {
+					console.log('Collision detected with plant!');
 					// Scale down the plant
-					gsap.to(testPlant.scale, {
+					gsap.to(plant.scale, {
 						duration: 2,
-						x: testPlant.scale.x * 0.2,
-						y: testPlant.scale.y * 0.2,
-						z: testPlant.scale.z * 0.2,
+						x: plant.scale.x * 0.2,
+						y: plant.scale.y * 0.2,
+						z: plant.scale.z * 0.2,
 					});
-					console.log('Plant1 decreased!');
+					console.log('Plant got small!');
 				}
-			}
+			});
 		}
 
 	} else {
@@ -555,26 +546,20 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			// Play water sound
 			if (laserSound.isPlaying) laserSound.stop();
 			laserSound.play();
-			// Replace bullet creation logic
-			if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
-				try {
-					gamepad.getHapticActuator(0).pulse(0.6, 100);
-				} catch {
-					// Do nothing
-				}
-				const bullet = createWaterdropBullet();
-				scene.add(bullet);
-				// Position the waterdrop at the blaster's position
-				blasterGroup.getWorldPosition(bullet.position);
-				blasterGroup.getWorldQuaternion(bullet.quaternion);
-				// Set the velocity and time-to-live for the bullet
-				const directionVector = forwardVector.clone().applyQuaternion(bullet.quaternion);
-				bullet.userData = {
-					velocity: directionVector.multiplyScalar(bulletSpeed),
-					timeToLive: bulletTimeToLive,
-				};
-				bullets[bullet.uuid] = bullet;
-			}
+			
+			const bullet = createWaterdropBullet();
+			scene.add(bullet);
+			// Position the waterdrop at the blaster's position
+			blasterGroup.getWorldPosition(bullet.position);
+			blasterGroup.getWorldQuaternion(bullet.quaternion);
+			// Set the velocity and time-to-live for the bullet
+			const directionVector = forwardVector.clone().applyQuaternion(bullet.quaternion);
+			bullet.userData = {
+				velocity: directionVector.multiplyScalar(bulletSpeed),
+				timeToLive: bulletTimeToLive,
+			};
+			bullets[bullet.uuid] = bullet;
+			
 		}
 	}
 	
@@ -589,52 +574,26 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		bullet.position.add(deltaVec);
 		bullet.userData.timeToLive -= delta;
 
-
-		if (testPlant) {
-			const plantBox = new THREE.Box3().setFromObject(testPlant); // Get the plant's bounding box
-			const bulletSphere = new THREE.Sphere(bullet.position, 0.1); // Create a small sphere around the bullet
-	
-			if (plantBox.intersectsSphere(bulletSphere)) {
-				console.log('Collision detected with plant1!');
+		const bulletSphere = new THREE.Sphere(bullet.position, 0.1);
+		plants.forEach(plant => {
+			const plantBoxen = new THREE.Box3().setFromObject(plant);
+			if (plantBoxen.intersectsSphere(bulletSphere)) {
+				console.log('Collision detected with plant!');
 	
 				// Remove the bullet
 				delete bullets[bullet.uuid];
 				scene.remove(bullet);
 	
 				// Scale up the plant
-				gsap.to(testPlant.scale, {
+				gsap.to(plant.scale, {
 					duration: 2,
-					x: testPlant.scale.x * 1.2,
-					y: testPlant.scale.y * 1.2,
-					z: testPlant.scale.z * 1.2,
+					x: plant.scale.x * 1.2,
+					y: plant.scale.y * 1.2,
+					z: plant.scale.z * 1.2,
 				});
-				console.log('Plant1 grew!');
+				console.log('Plant grew!');
 			}
-		}
-
-		/*plants.forEach((plant) => {
-			if (plant && plant.geometry && plant.position) { // Validate the plant object
-				// Create a bounding box for the plant
-				const plantBox = new THREE.Box3().setFromObject(plant);
-				// Create a bounding sphere for the bullet
-				const bulletSphere = new THREE.Sphere(bullet.position, 0.05); // Adjust radius as needed
-				// Check if the bullet intersects the plant's bounding box
-				if (plantBox.intersectsSphere(bulletSphere)) {
-					// Remove the bullet
-					delete bullets[bullet.uuid];
-					scene.remove(bullet);
-		
-					// Scale up the specific plant
-					gsap.to(plant.scale, {
-						duration: 2,
-						x: plant.scale.x * 1.2,
-						y: plant.scale.y * 1.2,
-						z: plant.scale.z * 1.2,
-					});
-					console.log(`Plant ${plant.name} grew!`);
-				}
-			}
-		});*/
+		});
 		
 
 		/*/ remove later

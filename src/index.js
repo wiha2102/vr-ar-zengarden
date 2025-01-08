@@ -6,27 +6,35 @@
  */
 
 import * as THREE from 'three';
-
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { Text } from 'troika-three-text';
 import { XR_BUTTONS } from 'gamepad-wrapper';
 import { gsap } from 'gsap';
 import { init } from './init.js';
 
-
 const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
 const bulletSpeed = 10;
 const bulletTimeToLive = 1;
-var moving = false
+var moving = false;
 
 const blasterGroup = new THREE.Group();
 const targets = [];
 const movingLights = [];
-let waterdropPrototype = null; // NIKKIS WATER TEST
+let waterdropPrototype = null;
 let blaster = null;
+
+// Names of objects
 const bigStone = "LargeRock_Rock2_0";
 const bigLight = "biglight";
+const smaltree = "smaltree";
+const bigtree = "bigtree";
+const plant1 = "plant1";
+const plant2 = "plant2";
+const plant3 = "plant3";
+const plant4 = "plant4";
+const plant5 = "plant5";
+const plants = [];
 
 let score = 0;
 const scoreText = new Text();
@@ -266,7 +274,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
             if (child.name === bigLight) {
                 if (child.isLight) {
                     console.log("Found Blender light:", child);
-
                     child.intensity = 1;
                     child.color = new THREE.Color(0xffeedd);
                     child.position.set(100, 200, -50);
@@ -277,7 +284,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                     }
                     scene.add(child);
                 } else {
-                    console.warn(`Expected light, but found: ${child.type}`);
+                    //warning
                 }
             }
 			if (child.name === bigStone) {
@@ -289,29 +296,13 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
             }
         });
     });
-
+	
+	// LIGHT
 	sun = addSunSphere(scene);
     sunlight = createSunlight(scene);
 
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	
-
-	// Maybe change?
-	gltfLoader.load('assets/watering_can.glb', (gltf) => {
-		blaster = gltf.scene;
-		blaster.scale.set(0.5,0.5,0.5);
-		blaster.rotation.x = Math.PI; // Rotatation
-		blaster.rotation.z = Math.PI;
-		blasterGroup.add(gltf.scene);
-	});
-
-	// Load the .glb file for the waterdrop
-	gltfLoader.load('assets/drop_of_water.glb', (gltf) => {
-		waterdropPrototype = gltf.scene;
-		console.log('Waterdrop model loaded successfully!');
-	});
-
 
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
 	light.position.set( 2, 3, 2 );
@@ -327,6 +318,22 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	cube.position.set(1,2,3)
 	scene.add(cube);
 
+	// Watering can
+	gltfLoader.load('assets/watering_can.glb', (gltf) => {
+		blaster = gltf.scene;
+		blaster.scale.set(0.5,0.5,0.5);
+		blaster.rotation.x = Math.PI;
+		blaster.rotation.z = Math.PI;
+		blaster.position.y -= 0.2;
+		blasterGroup.add(gltf.scene);
+	});
+
+	// Waterdrop
+	gltfLoader.load('assets/drop_of_water.glb', (gltf) => {
+		waterdropPrototype = gltf.scene;
+		console.log('Waterdrop model loaded successfully!');
+	});
+
 	// Add glowing spherical light sources
 	/*
     movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
@@ -337,7 +344,8 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	*/
 
 	//addLightSource(scene, new THREE.Vector3(1, 2.5, -2), 0xeeeeee, 200, 200);
-	// Remove later ----
+	
+	/*/ Remove later ----
 	gltfLoader.load('assets/target.glb', (gltf) => {
 		for (let i = 0; i < 3; i++) {
 			const target = gltf.scene.clone();
@@ -353,7 +361,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add(scoreText);
 	scoreText.position.set(0, 0.67, -1.44);
 	scoreText.rotateX(-Math.PI / 3.3);
-	updateScoreDisplay(); //----
+	updateScoreDisplay(); //----*/
 
 	// Load and set up positional audio
 	const listener = new THREE.AudioListener();
@@ -366,12 +374,12 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		blasterGroup.add(laserSound);
 	});
 
-	// Remove later
+	/*/ Remove later
 	scoreSound = new THREE.PositionalAudio(listener);
 	audioLoader.load('assets/score.ogg', (buffer) => {
 		scoreSound.setBuffer(buffer);
 		scoreText.add(scoreSound);
-	});
+	});*/
 }
 
 
@@ -415,14 +423,13 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			player.position.add(moveVector.multiplyScalar(speed * delta));
 		}
 
-		// CHANGE OBJECTS WITH A BUTTON CLICK
+		// CHANGE OBJECTS WITH A BUTTON CLICK (for the big stone?)
 		if(gamepad.getButtonClick(XR_BUTTONS.BUTTON_2)){
 			scene.traverse((child) => {
 				console.log(child.name);
 			});
 			var name = 'Nikkissten_Icosphere002_Material003_0'
-
-			var myObject = scene.getObjectByName(name, true);
+			var myObject = scene.getObjectByName(bigStone, true);
 
 			// Check if the object was found
 			if (myObject) {
@@ -430,7 +437,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				// Perform operations on the found object
 				myObject.material.color.set(0xff0000); // Example: Change its color to red
 			} else {
-				console.error("Object not found:", name);
+				console.error("Object not found:", bigStone);
 				// Handle the case where the object is not found
 			}
 		}
@@ -451,15 +458,15 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		const intersects = raycaster.intersectObjects(scene.children, true);
 		if (intersects.length > 0) {
 			const hitObject = intersects[0].object;
-
+			/*
 			if (hitObject.material) {
-				hitObject.material.color.set(Math.random() * 0xffffff);
+				//hitObject.material.color.set(Math.random() * 0xffffff);
 			}
 
 			// Scale the object for visual feedback
 			gsap.to(hitObject.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 0.3 });
 			gsap.to(hitObject.scale, { x: 1, y: 1, z: 1, delay: 0.3, duration: 0.3 });
-
+			*/
 			if (hitObject.name === 'target') {
 				console.log('Hit a target!');
 				// Maybe Some Logics into this
@@ -470,6 +477,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			raySpace.add(blasterGroup);
 			mesh.visible = false;
 		}
+
 		// SHOOT A WATERDROP AND PLAY A SOUND
 		if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
 			try {
@@ -503,7 +511,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		}
 	}
 	
-	// Remove or reuse later
+	// Action for when a waterdrop hits an object
 	Object.values(bullets).forEach((bullet) => {
 		if (bullet.userData.timeToLive < 0) {
 			delete bullets[bullet.uuid];
@@ -514,6 +522,30 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		bullet.position.add(deltaVec);
 		bullet.userData.timeToLive -= delta;
 
+		// Get objects via name, aka plants
+		plants.push(scene.getObjectByName(plant1, true))
+		plants.push(scene.getObjectByName(plant2, true))
+		plants.push(scene.getObjectByName(plant3, true))
+		plants.push(scene.getObjectByName(plant4, true))
+		plants.push(scene.getObjectByName(plant5, true))
+		plants.forEach((plant) => {
+			const distance = plant.position.distanceTo(bullet.position);
+			if (distance < 1) {
+				// Remove the bullet
+				delete bullets[bullet.uuid];
+				scene.remove(bullet);
+				// Scale up the plant
+				gsap.to(plant.scale, {
+					duration: 2,
+					x: plant.scale.x * 1.1, // Grow by 20%
+					y: plant.scale.y * 1.1,
+					z: plant.scale.z * 1.1,
+				});
+				console.log(`Plant ${plant.name} grew!`);
+			}
+		});		
+
+		/*/ remove later
 		targets
 			.filter((target) => target.visible && target.visible)
 			.forEach((target) => {
@@ -552,6 +584,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 					scoreSound.play();
 				}
 			});
+		*/
 	});
 	gsap.ticker.tick(delta);
 }

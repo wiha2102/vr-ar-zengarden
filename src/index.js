@@ -19,10 +19,12 @@ const bulletTimeToLive = 1;
 var moving = false;
 
 const blasterGroup = new THREE.Group();
+const scissorGroup = new THREE.Group();
 const targets = [];
 const movingLights = [];
 let waterdropPrototype = null;
 let blaster = null;
+let scissor = null;
 
 // Names of objects
 const bigStone = "LargeRock_Rock2_0";
@@ -35,6 +37,8 @@ const plant3 = "plant3";
 const plant4 = "plant4";
 const plant5 = "plant5";
 const plants = [];
+let plants2 = [];
+let testPlant=null;
 
 let score = 0;
 const scoreText = new Text();
@@ -45,7 +49,7 @@ scoreText.color = 0xffa276;
 scoreText.anchorX = 'center';
 scoreText.anchorY = 'middle';
 
-let laserSound, scoreSound;
+let laserSound, scoreSound, scissorSound;
 
 let sun = null;
 let sunlight = null;
@@ -265,12 +269,21 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
     const shadowCameraHelpe = new THREE.CameraHelper(directionalLight.shadow.camera);
     scene.add(shadowCameraHelpe);
 
+	// Load the whole model 
 	gltfLoader.load('assets/garden4.glb', (gltf) => {
         const garden = gltf.scene.clone();
-        garden.position.set(0, -1.5, 0);
+        garden.position.set(0, -1.5, 0); // WHY -1.5??
         scene.add(garden);
 
         garden.traverse((child) => {
+			if (['plant2', 'plant3', 'plant4', 'plant5'].includes(child.name)) {
+				console.log(`Found plant: ${child.name}`);
+				plants2.push(child); // Add the actual object to the plants array
+			}
+			if (child.name === 'plant1') {
+				console.log(`Found plant1: ${child.name}`);
+				testPlant = child; // Assign the specific plant to a variable
+			}
             if (child.name === bigLight) {
                 if (child.isLight) {
                     console.log("Found Blender light:", child);
@@ -296,6 +309,13 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
             }
         });
     });
+
+	// Get objects via name, aka plants
+	plants.push(scene.getObjectByName(plant1, true))
+	plants.push(scene.getObjectByName(plant2, true))
+	plants.push(scene.getObjectByName(plant3, true))
+	plants.push(scene.getObjectByName(plant4, true))
+	plants.push(scene.getObjectByName(plant5, true))
 	
 	// LIGHT
 	sun = addSunSphere(scene);
@@ -328,6 +348,16 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		blasterGroup.add(gltf.scene);
 	});
 
+	// Scissors
+	gltfLoader.load('assets/garden_scissors.glb', (gltf) => {
+		scissor = gltf.scene;
+		scissor.scale.set(0.0015,0.0015,0.0015);
+		scissor.rotation.x = -Math.PI/2;
+		scissor.rotation.z = Math.PI/2;
+		scissor.position.y -= 0.2;
+		scissorGroup.add(gltf.scene);
+	});
+
 	// Waterdrop
 	gltfLoader.load('assets/drop_of_water.glb', (gltf) => {
 		waterdropPrototype = gltf.scene;
@@ -357,11 +387,11 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 			scene.add(target);
 			targets.push(target);
 		}
-	});
+	});//----*/
 	scene.add(scoreText);
 	scoreText.position.set(0, 0.67, -1.44);
 	scoreText.rotateX(-Math.PI / 3.3);
-	updateScoreDisplay(); //----*/
+	updateScoreDisplay(); 
 
 	// Load and set up positional audio
 	const listener = new THREE.AudioListener();
@@ -372,6 +402,12 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	audioLoader.load('assets/water-drop.ogg', (buffer) => {
 		laserSound.setBuffer(buffer);
 		blasterGroup.add(laserSound);
+	});
+	// Scissor audio
+	scissorSound = new THREE.PositionalAudio(listener);
+	audioLoader.load('assets/rusty-blade-slice.ogg', (buffer) => {
+		scissorSound.setBuffer(buffer);
+		scissorGroup.add(scissorSound);
 	});
 
 	/*/ Remove later
@@ -406,8 +442,9 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 
 	if (controllers.left) {
+		const { gamepad, raySpace, mesh } = controllers.left;
+
 		// MOVING THE PLAYER
-		const { gamepad } = controllers.left;
 		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
             moving = true
         }
@@ -415,7 +452,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
             moving = false
         }
 		if (moving) {
-			// Move the player forward
 			let moveVector = new THREE.Vector3(0, 0, -1);
 			moveVector.applyQuaternion(camera.quaternion);
 			moveVector.normalize();
@@ -441,6 +477,49 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				// Handle the case where the object is not found
 			}
 		}
+
+		// APPERENCE
+		if (!raySpace.children.includes(scissorGroup)) {
+			raySpace.add(scissorGroup);
+			mesh.visible = false;
+		}
+
+		// Using the scissor AND PLAY A SOUND
+		if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
+			try {
+				gamepad.getHapticActuator(0).pulse(0.6, 100);
+			} catch {
+				// do nothing
+			}
+			// Play water sound
+			if (scissorSound.isPlaying) scissorSound.stop();
+			scissorSound.play();
+			// Replace bullet creation logic
+			if (gamepad.getButtonClick(XR_BUTTONS.TRIGGER)) {
+				try {
+					gamepad.getHapticActuator(0).pulse(0.6, 100);
+				} catch {
+					// Do nothing
+				}
+			}
+
+			if (testPlant) {
+				const plantBox = new THREE.Box3().setFromObject(testPlant); // Get the plant's bounding box
+				const scissorSphere = new THREE.Box3().setFromObject(scissor.position); 
+				if (plantBox.intersectsSphere(scissorSphere)) {
+					console.log('Collision detected with plant1!');
+					// Scale down the plant
+					gsap.to(testPlant.scale, {
+						duration: 2,
+						x: testPlant.scale.x * 0.2,
+						y: testPlant.scale.y * 0.2,
+						z: testPlant.scale.z * 0.2,
+					});
+					console.log('Plant1 decreased!');
+				}
+			}
+		}
+
 	} else {
 		console.warn("Left controller is not detected.");
 	}
@@ -462,15 +541,14 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			if (hitObject.material) {
 				//hitObject.material.color.set(Math.random() * 0xffffff);
 			}
-
 			// Scale the object for visual feedback
 			gsap.to(hitObject.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 0.3 });
 			gsap.to(hitObject.scale, { x: 1, y: 1, z: 1, delay: 0.3, duration: 0.3 });
-			*/
+			
 			if (hitObject.name === 'target') {
 				console.log('Hit a target!');
 				// Maybe Some Logics into this
-			}
+			}*/
 		}
 
 		if (!raySpace.children.includes(blasterGroup)) {
@@ -522,28 +600,53 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 		bullet.position.add(deltaVec);
 		bullet.userData.timeToLive -= delta;
 
-		// Get objects via name, aka plants
-		plants.push(scene.getObjectByName(plant1, true))
-		plants.push(scene.getObjectByName(plant2, true))
-		plants.push(scene.getObjectByName(plant3, true))
-		plants.push(scene.getObjectByName(plant4, true))
-		plants.push(scene.getObjectByName(plant5, true))
-		plants.forEach((plant) => {
-			const distance = plant.position.distanceTo(bullet.position);
-			if (distance < 1) {
+
+		if (testPlant) {
+			const plantBox = new THREE.Box3().setFromObject(testPlant); // Get the plant's bounding box
+			const bulletSphere = new THREE.Sphere(bullet.position, 0.1); // Create a small sphere around the bullet
+	
+			if (plantBox.intersectsSphere(bulletSphere)) {
+				console.log('Collision detected with plant1!');
+	
 				// Remove the bullet
 				delete bullets[bullet.uuid];
 				scene.remove(bullet);
+	
 				// Scale up the plant
-				gsap.to(plant.scale, {
+				gsap.to(testPlant.scale, {
 					duration: 2,
-					x: plant.scale.x * 1.1, // Grow by 20%
-					y: plant.scale.y * 1.1,
-					z: plant.scale.z * 1.1,
+					x: testPlant.scale.x * 1.2,
+					y: testPlant.scale.y * 1.2,
+					z: testPlant.scale.z * 1.2,
 				});
-				console.log(`Plant ${plant.name} grew!`);
+				console.log('Plant1 grew!');
 			}
-		});		
+		}
+
+		/*plants2.forEach((plant) => {
+			if (plant && plant.geometry && plant.position) { // Validate the plant object
+				// Create a bounding box for the plant
+				const plantBox = new THREE.Box3().setFromObject(plant);
+				// Create a bounding sphere for the bullet
+				const bulletSphere = new THREE.Sphere(bullet.position, 0.05); // Adjust radius as needed
+				// Check if the bullet intersects the plant's bounding box
+				if (plantBox.intersectsSphere(bulletSphere)) {
+					// Remove the bullet
+					delete bullets[bullet.uuid];
+					scene.remove(bullet);
+		
+					// Scale up the specific plant
+					gsap.to(plant.scale, {
+						duration: 2,
+						x: plant.scale.x * 1.2,
+						y: plant.scale.y * 1.2,
+						z: plant.scale.z * 1.2,
+					});
+					console.log(`Plant ${plant.name} grew!`);
+				}
+			}
+		});*/
+		
 
 		/*/ remove later
 		targets

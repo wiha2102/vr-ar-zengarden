@@ -272,7 +272,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 				child.receiveShadow = true; 
 				child.castShadow = true;    
 			}			
-			if (['plant1', 'plant2', 'plant3', 'plant4', 'plant5', 'smaltree', 'bigtree'].includes(child.name)) {
+			if (['plant1', 'plant2', 'plant3', 'plant4', 'plant5', 'tree', 'bigtree'].includes(child.name)) {
 				console.log(`Found plant: ${child.name}`);
 				plants.push(child); 
 			}
@@ -290,9 +290,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                     scene.add(child);
                 }
             }
-			if (child.name === 'Sketchfab_model.013') {
-				squirrel = child;
-			}
         });
     });
 

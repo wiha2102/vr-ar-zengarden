@@ -11,23 +11,23 @@ import { XR_BUTTONS } from 'gamepad-wrapper';
 import { gsap } from 'gsap';
 import { init } from './init.js';
 
-const bullets = {};
+const droplets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
-const bulletSpeed = 5;
-const bulletTimeToLive = 1;
+const dropletSpeed = 5;
+const dropletTimeToLive = 1;
 var moving = false;
 
-const blasterGroup = new THREE.Group();
+const wateringCanGroup = new THREE.Group();
 const scissorGroup = new THREE.Group();
 const movingLights = [];
 let waterdropPrototype = null;
-let blaster = null;
+let wateringCan = null;
 let scissor = null;
 
 const bigStone = "LargeRock_Rock2_0";
 const bigLight = "biglight";
 let plants = [];
-let laserSound, scoreSound, scissorSound;
+let waterSound, scissorSound;
 
 let sun = null;
 let sunlight = null;
@@ -295,12 +295,12 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 	// Watering can
 	gltfLoader.load('assets/watering_can.glb', (gltf) => {
-		blaster = gltf.scene;
-		blaster.scale.set(0.5,0.5,0.5);
-		blaster.rotation.x = Math.PI;
-		blaster.rotation.z = Math.PI;
-		blaster.position.y -= 0.2;
-		blasterGroup.add(gltf.scene);
+		wateringCan = gltf.scene;
+		wateringCan.scale.set(0.5,0.5,0.5);
+		wateringCan.rotation.x = Math.PI;
+		wateringCan.rotation.z = Math.PI;
+		wateringCan.position.y -= 0.2;
+		wateringCanGroup.add(gltf.scene);
 	});
 
 	// Scissors
@@ -341,10 +341,10 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	camera.add(listener);
 	// Water drop audio
 	const audioLoader = new THREE.AudioLoader();
-	laserSound = new THREE.PositionalAudio(listener);
+	waterSound = new THREE.PositionalAudio(listener);
 	audioLoader.load('assets/water-drop.ogg', (buffer) => {
-		laserSound.setBuffer(buffer);
-		blasterGroup.add(laserSound);
+		waterSound.setBuffer(buffer);
+		wateringCanGroup.add(waterSound);
 	});
 	// Scissor audio
 	scissorSound = new THREE.PositionalAudio(listener);
@@ -480,8 +480,8 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			}*/
 		}
 
-		if (!raySpace.children.includes(blasterGroup)) {
-			raySpace.add(blasterGroup);
+		if (!raySpace.children.includes(wateringCanGroup)) {
+			raySpace.add(wateringCanGroup);
 			mesh.visible = false;
 		}
 
@@ -493,45 +493,45 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				// do nothing
 			}
 			// Play water sound
-			if (laserSound.isPlaying) laserSound.stop();
-			laserSound.play();
+			if (waterSound.isPlaying) waterSound.stop();
+			waterSound.play();
 			
-			const bullet = createWaterdropBullet();
-			scene.add(bullet);
+			const droplet = createWaterdropBullet();
+			scene.add(droplet);
 			// Position the waterdrop at the blaster's position
-			blasterGroup.getWorldPosition(bullet.position);
-			blasterGroup.getWorldQuaternion(bullet.quaternion);
+			wateringCanGroup.getWorldPosition(droplet.position);
+			wateringCanGroup.getWorldQuaternion(droplet.quaternion);
 			// Set the velocity and time-to-live for the bullet
-			const directionVector = forwardVector.clone().applyQuaternion(bullet.quaternion);
-			bullet.userData = {
-				velocity: directionVector.multiplyScalar(bulletSpeed),
-				timeToLive: bulletTimeToLive,
+			const directionVector = forwardVector.clone().applyQuaternion(droplet.quaternion);
+			droplet.userData = {
+				velocity: directionVector.multiplyScalar(dropletSpeed),
+				timeToLive: dropletTimeToLive,
 			};
-			bullets[bullet.uuid] = bullet;
+			droplets[droplet.uuid] = droplet;
 			
 		}
 	}
 	
 	// Action for when a waterdrop hits an object
-	Object.values(bullets).forEach((bullet) => {
-		if (bullet.userData.timeToLive < 0) {
-			delete bullets[bullet.uuid];
-			scene.remove(bullet);
+	Object.values(droplets).forEach((droplet) => {
+		if (droplet.userData.timeToLive < 0) {
+			delete droplets[droplet.uuid];
+			scene.remove(droplet);
 			return;
 		}
-		const deltaVec = bullet.userData.velocity.clone().multiplyScalar(delta);
-		bullet.position.add(deltaVec);
-		bullet.userData.timeToLive -= delta;
+		const deltaVec = droplet.userData.velocity.clone().multiplyScalar(delta);
+		droplet.position.add(deltaVec);
+		droplet.userData.timeToLive -= delta;
 
-		const bulletSphere = new THREE.Sphere(bullet.position, 0.1);
+		const bulletSphere = new THREE.Sphere(droplet.position, 0.1);
 		plants.forEach(plant => {
 			const plantBoxen = new THREE.Box3().setFromObject(plant);
 			if (plantBoxen.intersectsSphere(bulletSphere)) {
 				console.log('Collision detected with plant!');
 	
 				// Remove the bullet
-				delete bullets[bullet.uuid];
-				scene.remove(bullet);
+				delete droplets[droplet.uuid];
+				scene.remove(droplet);
 	
 				// Scale up the plant
 				gsap.to(plant.scale, {

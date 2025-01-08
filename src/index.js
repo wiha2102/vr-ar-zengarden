@@ -25,6 +25,7 @@ const movingLights = [];
 let waterdropPrototype = null;
 let blaster = null;
 let scissor = null;
+let squirrel = null;
 
 // Names of objects
 const bigStone = "LargeRock_Rock2_0";
@@ -53,13 +54,13 @@ let sun = null;
 let sunlight = null;
 
 
-// Remove later (scoreboard)
+/* Remove later (scoreboard)
 function updateScoreDisplay() {
 	const clampedScore = Math.max(0, Math.min(9999, score));
 	const displayScore = clampedScore.toString().padStart(4, '0');
 	scoreText.text = displayScore;
 	scoreText.sync();
-}
+}*/
 
 
 // Light scources
@@ -290,7 +291,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
     //scene.add(shadowCameraHelpe);
 
 	// Load the whole model 
-	gltfLoader.load('assets/garden4.glb', (gltf) => {
+	gltfLoader.load('assets/garden5.glb', (gltf) => {
         const garden = gltf.scene.clone();
         garden.position.set(0, 0, 0);
         scene.add(garden);
@@ -320,6 +321,9 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                     //warning
                 }
             }
+			if (child.name === 'Sketchfab_model.013') {
+				squirrel = child;
+			}
         });
     });
 
@@ -348,6 +352,11 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		waterdropPrototype = gltf.scene;
 		console.log('Waterdrop model loaded successfully!');
 	});
+
+	// Set standard player position (to avoid big rock)
+	player.position.x=2;
+	player.position.z=2;
+
 
 	// Add glowing spherical light sources
 	/*
@@ -478,7 +487,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			} catch {
 				// do nothing
 			}
-			// Play water sound
+			// Play scissor sound
 			if (scissorSound.isPlaying) scissorSound.stop();
 			scissorSound.play();
 

@@ -272,7 +272,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 				child.receiveShadow = true; 
 				child.castShadow = true;    
 			}			
-			if (['plant1', 'plant2', 'plant3', 'plant4', 'plant5', 'tree', 'bigtree'].includes(child.name)) {
+			if (['p1', 'p2', 'p3', 'p4', 'p5', 'tree', 'bigtree'].includes(child.name)) {
 				console.log(`Found plant: ${child.name}`);
 				plants.push(child); 
 			}

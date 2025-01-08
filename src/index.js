@@ -14,7 +14,7 @@ import { init } from './init.js';
 
 const bullets = {};
 const forwardVector = new THREE.Vector3(0, 0, -1);
-const bulletSpeed = 10;
+const bulletSpeed = 5;
 const bulletTimeToLive = 1;
 var moving = false;
 
@@ -36,8 +36,7 @@ const plant2 = "plant2";
 const plant3 = "plant3";
 const plant4 = "plant4";
 const plant5 = "plant5";
-const plants = [];
-let plants2 = [];
+let plants = [];
 let testPlant=null;
 
 let score = 0;
@@ -244,8 +243,30 @@ function createWaterdropBullet() {
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
+
+	// LIGHT
+	sun = addSunSphere(scene);
+	sunlight = createSunlight(scene);
+
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
+	light.position.set( 2, 3, 2 );
+	//scene.add( light );
+	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
+	//scene.add(lightHelper);
+
+	const geometry = new THREE.BoxGeometry(1, 1, 1); 
+	const material = new THREE.MeshStandardMaterial({
+		color: 0xe3a7ec, 
+	});
+	const cube = new THREE.Mesh(geometry, material);
+	cube.position.set(1,2,3)
+	scene.add(cube);
+
 	// Lower the Ambient Light
-	const ambientLight = new THREE.AmbientLight(0xffffff, 0.025);
+	const ambientLight = new THREE.AmbientLight(0x000000, 0.025);
 	scene.add(ambientLight);
 	
 	const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
@@ -264,30 +285,34 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
     scene.add(directionalLight);
 
 	const lightHelpe = new THREE.DirectionalLightHelper(directionalLight, 10);
-    scene.add(lightHelpe);
+    //scene.add(lightHelpe);
 
     const shadowCameraHelpe = new THREE.CameraHelper(directionalLight.shadow.camera);
-    scene.add(shadowCameraHelpe);
+    //scene.add(shadowCameraHelpe);
 
 	// Load the whole model 
 	gltfLoader.load('assets/garden4.glb', (gltf) => {
         const garden = gltf.scene.clone();
-        garden.position.set(0, -1.5, 0); // WHY -1.5??
+        garden.position.set(0, 0, 0);
         scene.add(garden);
 
         garden.traverse((child) => {
+			if (child.isMesh) {
+				child.receiveShadow = true; 
+				child.castShadow = true;    
+			}			
 			if (['plant2', 'plant3', 'plant4', 'plant5'].includes(child.name)) {
 				console.log(`Found plant: ${child.name}`);
-				plants2.push(child); // Add the actual object to the plants array
+				plants.push(child); 
 			}
 			if (child.name === 'plant1') {
 				console.log(`Found plant1: ${child.name}`);
-				testPlant = child; // Assign the specific plant to a variable
+				testPlant = child; 
 			}
             if (child.name === bigLight) {
                 if (child.isLight) {
                     console.log("Found Blender light:", child);
-                    child.intensity = 1;
+                    child.intensity = 122; // ??
                     child.color = new THREE.Color(0xffeedd);
                     child.position.set(100, 200, -50);
                     if (child.castShadow !== undefined) {
@@ -300,43 +325,8 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                     //warning
                 }
             }
-			if (child.name === bigStone) {
-				child.castShadow = true;
-				child.receiveShadow = true;
-			}
-			else if (child.isMesh) {
-                child.receiveShadow = true;
-            }
         });
     });
-
-	// Get objects via name, aka plants
-	plants.push(scene.getObjectByName(plant1, true))
-	plants.push(scene.getObjectByName(plant2, true))
-	plants.push(scene.getObjectByName(plant3, true))
-	plants.push(scene.getObjectByName(plant4, true))
-	plants.push(scene.getObjectByName(plant5, true))
-	
-	// LIGHT
-	sun = addSunSphere(scene);
-    sunlight = createSunlight(scene);
-
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-
-	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
-	light.position.set( 2, 3, 2 );
-	scene.add( light );
-	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
-	scene.add(lightHelper);
-
-	const geometry = new THREE.BoxGeometry(1, 1, 1); 
-	const material = new THREE.MeshStandardMaterial({
-		color: 0xe3a7ec, 
-	});
-	const cube = new THREE.Mesh(geometry, material);
-	cube.position.set(1,2,3)
-	scene.add(cube);
 
 	// Watering can
 	gltfLoader.load('assets/watering_can.glb', (gltf) => {
@@ -354,7 +344,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		scissor.scale.set(0.0015,0.0015,0.0015);
 		scissor.rotation.x = -Math.PI/2;
 		scissor.rotation.z = Math.PI/2;
-		scissor.position.y -= 0.2;
+		//scissor.position.y -= 0.2;
 		scissorGroup.add(gltf.scene);
 	});
 
@@ -387,11 +377,11 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 			scene.add(target);
 			targets.push(target);
 		}
-	});//----*/
+	});
 	scene.add(scoreText);
 	scoreText.position.set(0, 0.67, -1.44);
 	scoreText.rotateX(-Math.PI / 3.3);
-	updateScoreDisplay(); 
+	updateScoreDisplay(); //----*/
 
 	// Load and set up positional audio
 	const listener = new THREE.AudioListener();
@@ -425,7 +415,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const tempMatrix = new THREE.Matrix4();
 
 	// Player postition
-	player.position.y = -1;
+	player.position.y = 0;
 	
 	/*
 	movingLights.forEach((lightGroup, index) => {
@@ -505,7 +495,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 			if (testPlant) {
 				const plantBox = new THREE.Box3().setFromObject(testPlant); // Get the plant's bounding box
-				const scissorSphere = new THREE.Box3().setFromObject(scissor.position); 
+				const scissorSphere = new THREE.Sphere(scissor.position, 1) 
 				if (plantBox.intersectsSphere(scissorSphere)) {
 					console.log('Collision detected with plant1!');
 					// Scale down the plant
@@ -523,7 +513,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	} else {
 		console.warn("Left controller is not detected.");
 	}
-
 
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
@@ -623,7 +612,7 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			}
 		}
 
-		/*plants2.forEach((plant) => {
+		/*plants.forEach((plant) => {
 			if (plant && plant.geometry && plant.position) { // Validate the plant object
 				// Create a bounding box for the plant
 				const plantBox = new THREE.Box3().setFromObject(plant);

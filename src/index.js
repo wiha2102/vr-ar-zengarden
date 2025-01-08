@@ -24,6 +24,7 @@ const blasterGroup = new THREE.Group();
 const targets = [];
 const movingLights = [];
 let waterdropPrototype = null; // NIKKIS WATER TEST
+let blaster = null;
 const bigStone = "LargeRock_Rock2_0";
 const bigLight = "biglight";
 
@@ -297,7 +298,11 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	
 
 	// Maybe change?
-	gltfLoader.load('assets/blaster.glb', (gltf) => {
+	gltfLoader.load('assets/watering_can.glb', (gltf) => {
+		blaster = gltf.scene;
+		blaster.scale.set(0.5,0.5,0.5);
+		blaster.rotation.x = Math.PI; // Rotatation
+		blaster.rotation.z = Math.PI;
 		blasterGroup.add(gltf.scene);
 	});
 
@@ -460,7 +465,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				// Maybe Some Logics into this
 			}
 		}
-
 
 		if (!raySpace.children.includes(blasterGroup)) {
 			raySpace.add(blasterGroup);

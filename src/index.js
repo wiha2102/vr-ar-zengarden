@@ -23,7 +23,7 @@ var moving = false
 const blasterGroup = new THREE.Group();
 const targets = [];
 const movingLights = [];
-const drop = []; // NIKKIS WATER TEST
+let waterdropPrototype = null; // NIKKIS WATER TEST
 const bigStone = "LargeRock_Rock2_0";
 const bigLight = "biglight";
 
@@ -51,9 +51,6 @@ function updateScoreDisplay() {
 }
 
 
-
-
-
 // Light scources
 function addLightSource(scene, position, color = 0xffffff, intensity = 1, distance = 10) {
     // Create a sphere geometry to represent the light source
@@ -77,6 +74,7 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
 
     return lightGroup;
 }
+
 
 function addSunSphere(scene) {
 	 const sunSphere = new THREE.Mesh(
@@ -135,7 +133,6 @@ function animateSunlight(sun, sunlight, time) {
     sunlight.target.position.set(0, 0, 0);
     sunlight.target.updateMatrixWorld();
 }
-
 
 
 function createExplosion(scene, position) {
@@ -211,7 +208,6 @@ function createExplosion(scene, position) {
 }
 
 
-
 function handleRaycast(raycaster, scene) {
 	const intersects = raycaster.intersectObjects(scene.children);
 	if (intersects.length > 0) {
@@ -220,14 +216,24 @@ function handleRaycast(raycaster, scene) {
 	return null;
 }
 
+// Create a waterdrop bullet shape (IN PROGRESS)
+function createWaterdropBullet() {
+    if (!waterdropPrototype) {
+        console.warn('Waterdrop model is not yet loaded!');
+        return null;
+    }
+    const waterdrop = waterdropPrototype.clone();
+    waterdrop.scale.set(0.05, 0.05, 0.05); 
+    waterdrop.rotation.x = Math.PI; // Rotatation
+    return waterdrop;
+}
+
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
 	// Lower the Ambient Light
 	const ambientLight = new THREE.AmbientLight(0xffffff, 0.025);
 	scene.add(ambientLight);
-
-
 	
 	const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
     directionalLight.position.set(100, 200, 100);
@@ -250,9 +256,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
     const shadowCameraHelpe = new THREE.CameraHelper(directionalLight.shadow.camera);
     scene.add(shadowCameraHelpe);
 
-
-
-	gltfLoader.load('assets/garden2.glb', (gltf) => {
+	gltfLoader.load('assets/garden4.glb', (gltf) => {
         const garden = gltf.scene.clone();
         garden.position.set(0, -1.5, 0);
         scene.add(garden);
@@ -270,13 +274,11 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                         child.shadow.mapSize.width = 2048;
                         child.shadow.mapSize.height = 2048;
                     }
-
                     scene.add(child);
                 } else {
                     console.warn(`Expected light, but found: ${child.type}`);
                 }
             }
-
 			if (child.name === bigStone) {
 				child.castShadow = true;
 				child.receiveShadow = true;
@@ -299,6 +301,12 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		blasterGroup.add(gltf.scene);
 	});
 
+	// Load the .glb file for the waterdrop
+	gltfLoader.load('assets/drop_of_water.glb', (gltf) => {
+		waterdropPrototype = gltf.scene;
+		console.log('Waterdrop model loaded successfully!');
+	});
+
 
 	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
 	light.position.set( 2, 3, 2 );
@@ -315,13 +323,13 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.add(cube);
 
 	// Add glowing spherical light sources
-/*
+	/*
     movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(1, 2, 1), 0x0000ff, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
 	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
-*/
+	*/
 
 	//addLightSource(scene, new THREE.Vector3(1, 2.5, -2), 0xeeeeee, 200, 200);
 	// Remove later ----
@@ -359,22 +367,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		scoreSound.setBuffer(buffer);
 		scoreText.add(scoreSound);
 	});
-}
-
-
-// Create a waterdrop bullet shape (IN PROGRESS)
-function createWaterdropBullet() {
-	const geometry = new THREE.ConeGeometry(0.05, 0.2, 16); // Base radius, height, radial segments
-	const material = new THREE.MeshStandardMaterial({
-		color: 0x00bfff, // Aqua color
-		emissive: 0x0000ff, // Glow effect
-		emissiveIntensity: 0.5,
-	});
-	const waterdrop = new THREE.Mesh(geometry, material);
-	// Rotate the cone to point in the forward direction
-	//waterdrop.rotation.x = Math.PI; // Rotate 180 degrees
-
-	return waterdrop;
 }
 
 

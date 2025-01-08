@@ -7,7 +7,6 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { Text } from 'troika-three-text';
 import { XR_BUTTONS } from 'gamepad-wrapper';
 import { gsap } from 'gsap';
 import { init } from './init.js';
@@ -20,47 +19,18 @@ var moving = false;
 
 const blasterGroup = new THREE.Group();
 const scissorGroup = new THREE.Group();
-const targets = [];
 const movingLights = [];
 let waterdropPrototype = null;
 let blaster = null;
 let scissor = null;
-let squirrel = null;
 
-// Names of objects
 const bigStone = "LargeRock_Rock2_0";
 const bigLight = "biglight";
-const smaltree = "smaltree";
-const bigtree = "bigtree";
-const plant1 = "plant1";
-const plant2 = "plant2";
-const plant3 = "plant3";
-const plant4 = "plant4";
-const plant5 = "plant5";
 let plants = [];
-
-let score = 0;
-const scoreText = new Text();
-scoreText.fontSize = 0.52;
-scoreText.font = 'assets/SpaceMono-Bold.ttf';
-scoreText.position.z = -2;
-scoreText.color = 0xffa276;
-scoreText.anchorX = 'center';
-scoreText.anchorY = 'middle';
-
 let laserSound, scoreSound, scissorSound;
 
 let sun = null;
 let sunlight = null;
-
-
-/* Remove later (scoreboard)
-function updateScoreDisplay() {
-	const clampedScore = Math.max(0, Math.min(9999, score));
-	const displayScore = clampedScore.toString().padStart(4, '0');
-	scoreText.text = displayScore;
-	scoreText.sync();
-}*/
 
 
 // Light scources
@@ -317,8 +287,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                         child.shadow.mapSize.height = 2048;
                     }
                     scene.add(child);
-                } else {
-                    //warning
                 }
             }
 			if (child.name === 'Sketchfab_model.013') {
@@ -369,23 +337,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 
 	//addLightSource(scene, new THREE.Vector3(1, 2.5, -2), 0xeeeeee, 200, 200);
 	
-	/*/ Remove later ----
-	gltfLoader.load('assets/target.glb', (gltf) => {
-		for (let i = 0; i < 3; i++) {
-			const target = gltf.scene.clone();
-			target.position.set(
-				Math.random() * 2.5 - 2,
-				i * 2 + 1,
-				-Math.random() * 2 - 1.5,
-			);
-			scene.add(target);
-			targets.push(target);
-		}
-	});
-	scene.add(scoreText);
-	scoreText.position.set(0, 0.67, -1.44);
-	scoreText.rotateX(-Math.PI / 3.3);
-	updateScoreDisplay(); //----*/
 
 	// Load and set up positional audio
 	const listener = new THREE.AudioListener();
@@ -403,13 +354,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 		scissorSound.setBuffer(buffer);
 		scissorGroup.add(scissorSound);
 	});
-
-	/*/ Remove later
-	scoreSound = new THREE.PositionalAudio(listener);
-	audioLoader.load('assets/score.ogg', (buffer) => {
-		scoreSound.setBuffer(buffer);
-		scoreText.add(scoreSound);
-	});*/
 }
 
 
@@ -435,7 +379,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	*/
 
 	if (sun && sunlight) { animateSunlight(sun, sunlight, time); }
-
 
 	if (controllers.left) {
 		const { gamepad, raySpace, mesh } = controllers.left;
@@ -509,7 +452,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				}
 			});
 		}
-
 	} else {
 		console.warn("Left controller is not detected.");
 	}
@@ -604,47 +546,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 			}
 		});
 		
-
-		/*/ remove later
-		targets
-			.filter((target) => target.visible && target.visible)
-			.forEach((target) => {
-				const distance = target.position.distanceTo(bullet.position);
-				if (distance < 1) {
-					delete bullets[bullet.uuid];
-					scene.remove(bullet);
-
-					// Createw explostions for hte targetes to test ig it works
-					createExplosion(scene, target.position);
-
-					gsap.to(target.scale, {
-						duration: 0.3,
-						x: 0, y: 0, z: 0,
-						onComplete: () => {
-							target.visible = false;
-							setTimeout(() => {
-								target.visible = true;
-								target.position.x = Math.random() * 10 - 5;
-								target.position.z = -Math.random() * 5 - 5;
-
-								// Scale back up the target
-								gsap.to(target.scale, {
-									duration: 0.3,
-									x: 1,
-									y: 1,
-									z: 1,
-								});
-							}, 1000);
-						},
-					});
-
-					score += 10;
-					updateScoreDisplay();
-					if (scoreSound.isPlaying) scoreSound.stop();
-					scoreSound.play();
-				}
-			});
-		*/
 	});
 	gsap.ticker.tick(delta);
 }

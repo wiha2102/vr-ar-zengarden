@@ -119,6 +119,87 @@ function animateSunlight(sun, sunlight, time) {
 }
 
 
+function createExplosion(scene, position) {
+    const particleCount = 20;
+    const particles = [];
+    const velocities = [];
+
+    // Generate particles and assign random velocities
+    for (let i = 0; i < particleCount; i++) {
+        const particle = new THREE.Mesh(
+            new THREE.SphereGeometry(0.035, 5, 5), // Small spheres as particles
+            new THREE.MeshStandardMaterial({
+                color: 0xff4500,
+                emissive: 0x553377,
+                emissiveIntensity: 8,
+            })
+        );
+
+        particle.position.copy(position);
+        const velocity = new THREE.Vector3(
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 6,
+            (Math.random() - 0.5) * 6
+        );
+
+        particles.push(particle);
+        velocities.push(velocity);
+
+        scene.add(particle);
+    }
+
+    // Particle updatee by time
+    const lifespan = 2; // Measureed in Seconds
+    const updateParticles = (delta) => {
+        for (let i = 0; i < particles.length; i++) {
+            const particle = particles[i];
+            if (!particle) continue;
+
+            particle.position.add(velocities[i].clone().multiplyScalar(delta));
+
+            // Gradually fade out the particles ovetr time
+            const material = particle.material;
+            if (material.opacity > 0) {
+                material.opacity -= delta / lifespan; // Fade out
+                material.transparent = true;
+            } else {
+                scene.remove(particle);
+                particles[i] = null;
+            }
+        }
+    };
+
+    const startTime = performance.now();
+    const animateParticles = () => {
+        const currentTime = performance.now();
+        const elapsedTime = (currentTime - startTime) / 1000;
+
+        if (elapsedTime < lifespan) {
+            requestAnimationFrame(animateParticles);
+            const delta = 0.016;
+            updateParticles(delta);
+        } else {
+            particles.forEach((particle) => {
+                if (particle) {
+                    scene.remove(particle);
+                    particle.geometry.dispose();
+                    particle.material.dispose();
+                }
+            });
+        }
+    };
+    animateParticles();
+}
+
+
+function handleRaycast(raycaster, scene) {
+	const intersects = raycaster.intersectObjects(scene.children);
+	if (intersects.length > 0) {
+		return intersects[0];
+	}
+	return null;
+}
+
 // Create a waterdrop bullet shape (IN PROGRESS)
 function createWaterdropBullet() {
     if (!waterdropPrototype) {
@@ -228,18 +309,21 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	player.position.x=2;
 	player.position.z=2;
 
-
-	// Add glowing spherical light sources
-	/*
-    movingLights.push(addLightSource(scene, new THREE.Vector3(2, 1, -1), 0xff0000, 120, 250));
-	movingLights.push(addLightSource(scene, new THREE.Vector3(-3, 1.5, -1), 0x00ff00, 120, 250));
-	movingLights.push(addLightSource(scene, new THREE.Vector3(1, 2, 1), 0x0000ff, 120, 250));
-	movingLights.push(addLightSource(scene, new THREE.Vector3(-2, 5, 2.5), 0xffff00, 120, 250));
-	movingLights.push(addLightSource(scene, new THREE.Vector3(0, 3, 1), 0xff00ff, 120, 250));
-	*/
-
-	//addLightSource(scene, new THREE.Vector3(1, 2.5, -2), 0xeeeeee, 200, 200);
 	
+	
+	// ---== Light Balls ==--- //
+
+	addLightSource(scene, new THREE.Vector3(8, 5, -10), 0x3394ff, 10, 10); // Bluish Light
+	addLightSource(scene, new THREE.Vector3(8, 5, 10), 0x23ff44, 10, 10);	// Greensish Light
+	addLightSource(scene, new THREE.Vector3(8, 5, 0), 0xff3522, 10, 10); // redusg Light
+	
+	addLightSource(scene, new THREE.Vector3(-8, 5, -10), 0xfe32ee, 10, 10); // magenta Light
+	addLightSource(scene, new THREE.Vector3(-8, 5, 10), 0xffa500, 10, 10); //  orange Light
+	addLightSource(scene, new THREE.Vector3(-8, 5, 0), 0xffc0cb, 10, 10); // pink Light
+	
+
+	addLightSource(scene, new THREE.Vector3(0, 5, -10), 0x0000ff, 10, 10); // Blue Light
+	addLightSource(scene, new THREE.Vector3(0, 5, 10), 0x00ff00, 10, 10); // Green Light
 
 	// Load and set up positional audio
 	const listener = new THREE.AudioListener();

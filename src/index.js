@@ -6,6 +6,7 @@
  */
 
 import * as THREE from 'three';
+import { EXRLoader } from 'three/addons/loaders/EXRLoader.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { XR_BUTTONS } from 'gamepad-wrapper';
 import { gsap } from 'gsap';
@@ -19,7 +20,6 @@ var moving = false;
 
 const wateringCanGroup = new THREE.Group();
 const scissorGroup = new THREE.Group();
-const movingLights = [];
 let waterdropPrototype = null;
 let wateringCan = null;
 let scissor = null;
@@ -133,6 +133,17 @@ function createWaterdropBullet() {
 function setupScene({ scene, camera, renderer, player, controllers }) {
 	const gltfLoader = new GLTFLoader();
 
+	// BACKGROUND (sky)
+	const exrLoader = new EXRLoader();
+	exrLoader.load('assets/background.exr', (texture) => {
+		texture.mapping = THREE.EquirectangularReflectionMapping; // Map the texture correctly
+		// Set the scene background
+		scene.background = texture;
+		// Optional: Set the environment map for realistic lighting
+		scene.environment = texture;
+		console.log("NIKKI TEST NIKKI", texture)
+	});
+
 
 	// LIGHT =====================================================================
 	sun = addSunSphere(scene);
@@ -142,7 +153,6 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	scene.environment = null;
 	const ambientLight = new THREE.AmbientLight(0x404040, 20);
 	scene.add(ambientLight);
-	scene.background = new THREE.Color(0xADD8E6); // Dark blue
 
 	//const lightHelpe = new THREE.DirectionalLightHelper(sunlight, 10);
     //scene.add(lightHelpe);
@@ -375,8 +385,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 				}
 			});
 		}
-	} else {
-		console.warn("Left controller is not detected.");
 	}
 
 	if (controllers.right) {

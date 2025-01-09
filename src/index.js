@@ -24,6 +24,9 @@ let waterdropPrototype = null;
 let wateringCan = null;
 let scissor = null;
 
+var groundName = "GardenMain_Gardensand_0";
+var squirrelName = "wholeSquirrel";
+let squirrel = null;
 const bigStone = "LargeRock_Rock2_0";
 const bigLight = "biglight";
 let plants = [];
@@ -60,7 +63,7 @@ function addLightSource(scene, position, color = 0xffffff, intensity = 1, distan
 
 function addSunSphere(scene) {
 	 const sunSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(20, 32, 32),
+        new THREE.SphereGeometry(5, 25, 25),
         new THREE.MeshBasicMaterial({
             color: 0xffd700, 		// Golden yellow
             emissive: 0xffaa00, 	// Glow effect
@@ -76,37 +79,36 @@ function addSunSphere(scene) {
 
 
 function createSunlight(scene) {
-    const sunlight = new THREE.SpotLight(0xfff8e8, 3);
+	const sunlight = new THREE.DirectionalLight(0xffffff, 10);
+    sunlight.shadow.mapSize.width = 4096;
+    sunlight.shadow.mapSize.height = 4096;
+    sunlight.shadow.camera.near = 1;
+    sunlight.shadow.camera.far = 500;
+    sunlight.shadow.camera.left = -200;
+    sunlight.shadow.camera.right = 200;
+    sunlight.shadow.camera.top = 200;
+    sunlight.shadow.camera.bottom = -200;
     sunlight.position.set(100, 150, -200);
     sunlight.angle = Math.PI / 6;
     sunlight.penumbra = 0.1; // Slightly soft edges
     sunlight.decay = 2;
     sunlight.distance = 500;
-
-    // Enable shadows for the sunlight
     sunlight.castShadow = true;
-    sunlight.shadow.mapSize.width = 2048;
-    sunlight.shadow.mapSize.height = 2048;
-    sunlight.shadow.camera.near = 10; // Near clipping plane
-    sunlight.shadow.camera.far = 500; // Far clipping plane
-
     scene.add(sunlight);
-
     sunlight.target.position.set(0, 0, 0);
     scene.add(sunlight.target);
-
     return sunlight;
 }
 
 
 function animateSunlight(sun, sunlight, time) {
     const radius = 25; // Distance from the center
-    const speed = 0.05; // Speed of rotation
-    const yOffset = 100; // Stay above the horizon
+    const speed = 0.03; // Speed of rotation
+    const yOffset = 30; // Stay above the horizon
 
     const x = Math.cos(time * speed) * radius;
-    const y = Math.sin(time * speed) * radius + yOffset;
     const z = Math.sin(time * speed) * radius;
+    const y = yOffset; //Math.sin(time * speed) * radius;
 
     // Update the sun's position
     sun.position.set(x, y, z);
@@ -217,52 +219,21 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	// LIGHT =====================================================================
 	sun = addSunSphere(scene);
 	sunlight = createSunlight(scene);
-
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-	const light = new THREE.PointLight( 0xbd0ad1, 1, 100 );
-	light.position.set( 2, 3, 2 );
-	//scene.add( light );
-	const lightHelper = new THREE.PointLightHelper(light, 1); // 1 is the size of the helper sphere
-	//scene.add(lightHelper);
-
-	const geometry = new THREE.BoxGeometry(1, 1, 1); 
-	const material = new THREE.MeshStandardMaterial({
-		color: 0xe3a7ec, 
-	});
-	const cube = new THREE.Mesh(geometry, material);
-	cube.position.set(1,2,3)
-	scene.add(cube);
-
-	// Lower the Ambient Light
-	const ambientLight = new THREE.AmbientLight(0x000000, 0.025);
+	const ambientLight = new THREE.AmbientLight(0x404040, 0);
 	scene.add(ambientLight);
-	
-	const directionalLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    directionalLight.position.set(100, 200, 100);
-    directionalLight.castShadow = true;
 
-    directionalLight.shadow.mapSize.width = 4096;
-    directionalLight.shadow.mapSize.height = 4096;
-    directionalLight.shadow.camera.near = 1;
-    directionalLight.shadow.camera.far = 500;
-    directionalLight.shadow.camera.left = -200;
-    directionalLight.shadow.camera.right = 200;
-    directionalLight.shadow.camera.top = 200;
-    directionalLight.shadow.camera.bottom = -200;
-
-    scene.add(directionalLight);
-
-	const lightHelpe = new THREE.DirectionalLightHelper(directionalLight, 10);
+	//const lightHelpe = new THREE.DirectionalLightHelper(sunlight, 10);
     //scene.add(lightHelpe);
 
-    const shadowCameraHelpe = new THREE.CameraHelper(directionalLight.shadow.camera);
+    //const shadowCameraHelpe = new THREE.CameraHelper(sunlight.shadow.camera);
     //scene.add(shadowCameraHelpe);
-	// LIGHT =====================================================================
+
 
 	// Load the whole model 
-	gltfLoader.load('assets/garden5.glb', (gltf) => {
+	gltfLoader.load('assets/garden.glb', (gltf) => {
         const garden = gltf.scene.clone();
         garden.position.set(0, 0, 0);
         scene.add(garden);
@@ -290,6 +261,21 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
                     scene.add(child);
                 }
             }
+			if (child.name === squirrelName) {
+				child.visible = false;
+				squirrel = child;
+				scene.add(squirrel);
+			}
+			if (child.name === "Light") {
+				child.visible = false;
+			}
+			if (child.name === groundName){
+				const groundObject = scene.getObjectByName(groundName);
+				groundObject.material.color.set(0x8B7765); // Set a darker color
+				groundObject.material.emissive.set(0x000000); // Remove emissive light
+				groundObject.material.roughness = 1; // Increase roughness to reduce shininess
+				groundObject.material.metalness = 0;
+			}
         });
     });
 
@@ -381,6 +367,27 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	if (controllers.left) {
 		const { gamepad, raySpace, mesh } = controllers.left;
 
+		// Prepare the raycaster direction
+		tempMatrix.identity().extractRotation(raySpace.matrixWorld);
+		raycaster.ray.origin.setFromMatrixPosition(raySpace.matrixWorld);
+		raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+		// Perform raycast against all objects in the scene
+		const intersects = raycaster.intersectObjects(scene.children, true);
+		if (intersects.length > 0) {
+			const hitObject = intersects[0].object;
+			if (hitObject.name === bigStone){
+				squirrel.position.y = 0;
+				squirrel.position.x = 2;
+				squirrel.position.z = 2;
+				squirrel.scale.x = 0.05;
+				squirrel.scale.y = 0.05;
+				squirrel.scale.z = 0.05;
+				squirrel.rotation.x = -Math.PI/2;
+				squirrel.visible = true;
+			}
+		}
+
 		// MOVING THE PLAYER
 		if(gamepad.getButtonDown(XR_BUTTONS.BUTTON_1)){
             moving = true
@@ -456,29 +463,6 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 
 	if (controllers.right) {
 		const { gamepad, raySpace, mesh } = controllers.right;
-
-		// Prepare the raycaster direction
-		tempMatrix.identity().extractRotation(raySpace.matrixWorld);
-		raycaster.ray.origin.setFromMatrixPosition(raySpace.matrixWorld);
-		raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
-
-		// Perform raycast against all objects in the scene
-		const intersects = raycaster.intersectObjects(scene.children, true);
-		if (intersects.length > 0) {
-			const hitObject = intersects[0].object;
-			/*
-			if (hitObject.material) {
-				//hitObject.material.color.set(Math.random() * 0xffffff);
-			}
-			// Scale the object for visual feedback
-			gsap.to(hitObject.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 0.3 });
-			gsap.to(hitObject.scale, { x: 1, y: 1, z: 1, delay: 0.3, duration: 0.3 });
-			
-			if (hitObject.name === 'target') {
-				console.log('Hit a target!');
-				// Maybe Some Logics into this
-			}*/
-		}
 
 		if (!raySpace.children.includes(wateringCanGroup)) {
 			raySpace.add(wateringCanGroup);

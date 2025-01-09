@@ -150,7 +150,7 @@ function setupScene({ scene, camera, renderer, player, controllers }) {
 	sunlight = createSunlight(scene);
 	renderer.shadowMap.enabled = true;
 	renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-	scene.environment = null;
+	//scene.environment = null;
 	const ambientLight = new THREE.AmbientLight(0x404040, 20);
 	scene.add(ambientLight);
 
@@ -275,8 +275,22 @@ function onFrame( delta, time, { scene, camera, renderer, player, controllers },
 	const tempMatrix = new THREE.Matrix4();
 
 	// Player postition
-	if (player.position.y !== 0) {
-    	player.position.y = 0;
+	if (player.position.x > 6 || player.position.x < -6) {
+		player.position.y = 1;
+	}else if (player.position.z > 7.6 || player.position.z < -7.6){
+		player.position.y = 1;
+	}else {
+		player.position.y = 0;
+	}
+
+	if (player.position.x > 8.75) {
+		player.position.x = 8.75;
+	}else if (player.position.x < -8.75) {
+		player.position.x = -8.75;
+	}else if (player.position.z > 10.45) {
+		player.position.z = 10.45;
+	}else if (player.position.z < -10.45) {
+		player.position.z = -10.45;
 	}
 	
 	/*
